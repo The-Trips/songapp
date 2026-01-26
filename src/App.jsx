@@ -1,53 +1,37 @@
 // App.jsx
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Login from './Login';
 import Register from './Registration';
 import CreateUsername from './CreateUsername';
 import Homepage from './homepage';
+import AlbumPage from './AlbumPage'; // Import the Album Page
 import './App.css';
 
 function App() {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // We are simulating a logged-in state. 
+  // In a real app without Supabase, you might check localStorage here.
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
+  const handleLogin = () => setIsAuthenticated(true);
 
   return (
     <Router>
       <Routes>
-        {/* Protected Route: Home */}
+        {/* Main Routes */}
         <Route 
           path="/" 
-          element={session ? <Homepage /> : <Navigate to="/login" />} 
+          element={isAuthenticated ? <Homepage /> : <Login onLogin={handleLogin} />} 
         />
+        
+        {/* Connect Album Page */}
+        <Route path="/album" element={<AlbumPage />} />
 
         {/* Auth Routes */}
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
-        
-        {/* Create Username - Only accessible if you have a session (logged in) but no profile yet */}
-        <Route 
-          path="/create-username" 
-          element={session ? <CreateUsername /> : <Navigate to="/login" />} 
-        />
+        <Route path="/create-username" element={<CreateUsername />} />
       </Routes>
     </Router>
   );

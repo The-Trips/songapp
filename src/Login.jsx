@@ -1,26 +1,23 @@
 // Login.jsx
 import React from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "./supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import "./App.css";
 
-function Login() {
+function Login({ onLogin }) {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const navigate = useNavigate();
 
-    const onSubmit = async (data) => {
-        const { data: userData, error } = await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
-        });
-
-        if (error) {
-            alert("Login failed: " + error.message);
-        } else {
-            // Redirect to Home
-            navigate('/'); 
+    const onSubmit = (data) => {
+        // Simulate login success
+        if (onLogin) onLogin(); 
+        
+        // Save dummy email as "user" for now if not set
+        if(!localStorage.getItem('app_username')) {
+            localStorage.setItem('app_username', data.email.split('@')[0]);
         }
+        
+        navigate('/'); 
     };
 
     return (

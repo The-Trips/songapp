@@ -1,39 +1,27 @@
 // Homepage.jsx
 import React, { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
 import { useNavigate } from 'react-router-dom';
-import './index.css'; // Ensure CSS is available
+import './index.css'; 
 
 function Homepage() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('User');
+  const [username, setUsername] = useState('Guest');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Home');
 
   useEffect(() => {
-    getProfile();
+    // Simulate fetching user profile from local storage instead of Supabase
+    const storedUser = localStorage.getItem('app_username');
+    if (storedUser) {
+        setUsername(storedUser);
+    }
   }, []);
 
-  const getProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      // Fetch username from the 'profiles' table we created
-      const { data } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('id', user.id)
-        .single();
-      
-      if (data) setUsername(data.username);
-    }
-  };
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    // specific logic to clear local auth if needed
     navigate('/login');
   };
 
-  // The 5 Tabs
   const navItems = ["Home", "Search/Explore", "Communities", "Activity", "Profile"];
 
   return (
@@ -42,7 +30,6 @@ function Homepage() {
       <nav className="navbar">
         <div className="nav-brand">Song App</div>
         
-        {/* CENTER TABS */}
         <div className="nav-links">
           {navItems.map((item) => (
             <div 
@@ -55,7 +42,6 @@ function Homepage() {
           ))}
         </div>
 
-        {/* RIGHT SIDE: USER DROPDOWN */}
         <div className="user-menu-container">
           <div 
             className="user-trigger" 
@@ -65,7 +51,6 @@ function Homepage() {
             <span className="caret">▼</span>
           </div>
 
-          {/* DROPDOWN CONTENT */}
           {isDropdownOpen && (
             <div className="dropdown-menu">
               <div className="dropdown-item" onClick={() => setActiveTab('Profile')}>
@@ -82,8 +67,37 @@ function Homepage() {
       {/* --- MAIN CONTENT AREA --- */}
       <div className="main-content">
         <h1>{activeTab}</h1>
-        <p>Content for {activeTab} will go here.</p>
-        {activeTab === 'Home' && <p>Welcome to your Social Feed & Recommendations!</p>}
+        
+        {activeTab === 'Home' && (
+            <div style={{marginTop: '20px'}}>
+                <h3>Welcome back, {username}!</h3>
+                <p>Here are your top recommendations for today:</p>
+                
+                {/* --- CONNECTION TO ALBUM PAGE --- */}
+                <div 
+                    onClick={() => navigate('/album')}
+                    style={{
+                        marginTop: '20px', 
+                        padding: '20px', 
+                        background: '#333', 
+                        borderRadius: '10px', 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '20px',
+                        border: '1px solid #555'
+                    }}
+                >
+                    <div style={{width: '80px', height: '80px', background: '#000', borderRadius: '5px'}}></div>
+                    <div>
+                        <h2 style={{margin: 0}}>New Release: Drake</h2>
+                        <p style={{margin: '5px 0', color: '#ccc'}}>Click here to listen and review.</p>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {activeTab !== 'Home' && <p>Content for {activeTab} will go here.</p>}
       </div>
     </div>
   );
