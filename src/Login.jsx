@@ -1,7 +1,6 @@
 // Login.jsx
 import React from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "./supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
 import "./App.css";
 
@@ -9,18 +8,10 @@ function Login() {
     const { register, handleSubmit, formState: { errors } } = useForm();
     const navigate = useNavigate();
 
-    const onSubmit = async (data) => {
-        const { data: userData, error } = await supabase.auth.signInWithPassword({
-            email: data.email,
-            password: data.password,
-        });
-
-        if (error) {
-            alert("Login failed: " + error.message);
-        } else {
-            // Redirect to Home
-            navigate('/'); 
-        }
+    const onSubmit = (data) => {
+        // Static form - just show a message and navigate
+        alert("Login form submitted (static page - no authentication)");
+        navigate('/'); 
     };
 
     return (

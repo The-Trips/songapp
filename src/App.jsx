@@ -1,53 +1,27 @@
 // App.jsx
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Login from './Login';
 import Register from './Registration';
 import CreateUsername from './CreateUsername';
 import Homepage from './homepage';
+import AlbumPage from './AlbumPage';
 import './App.css';
 
 function App() {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
-
   return (
     <Router>
       <Routes>
-        {/* Protected Route: Home */}
-        <Route 
-          path="/" 
-          element={session ? <Homepage /> : <Navigate to="/login" />} 
-        />
-
-        {/* Auth Routes */}
+        {/* All routes are now static - no authentication required */}
+        <Route path="/" element={<Homepage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/create-username" element={<CreateUsername />} />
         
-        {/* Create Username - Only accessible if you have a session (logged in) but no profile yet */}
-        <Route 
-          path="/create-username" 
-          element={session ? <CreateUsername /> : <Navigate to="/login" />} 
-        />
+        {/* 2. Add the dynamic route for albums */}
+        {/* The ":id" tells React this part of the URL is a variable (like 1, 2, or 3) */}
+        <Route path="/album/:id" element={<AlbumPage />} />
       </Routes>
     </Router>
   );

@@ -1,29 +1,17 @@
 // Registration.jsx
 import React from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "./supabaseClient";
-import { useNavigate, Link } from "react-router-dom"; // Import Link and useNavigate
+import { useNavigate, Link } from "react-router-dom";
 import "./App.css";
 
 function Register() {
     const { register, handleSubmit, formState: { errors } } = useForm();
-    const navigate = useNavigate(); // Hook for navigation
+    const navigate = useNavigate();
 
-    const onSubmit = async (data) => {
-        const { user, error } = await supabase.auth.signUp({
-            email: data.email,
-            password: data.password,
-            options: {
-                data: { full_name: data.name },
-            },
-        });
-
-        if (error) {
-            alert("Error: " + error.message);
-        } else {
-            // Redirect to Create Username page
-            navigate('/create-username');
-        }
+    const onSubmit = (data) => {
+        // Static form - just show a message and navigate
+        alert("Registration form submitted (static page - no authentication)");
+        navigate('/create-username');
     };
 
     return (
