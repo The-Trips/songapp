@@ -83,12 +83,15 @@ We have a script configured to run both the frontend and backend simultaneously.
 
 If Option A fails, you can run the services separately in two different terminal windows.
 
-**Terminal 1 (Backend):**
+**Terminal 1 (Frontend):**
+# In the root directory
+npm run dev
+# songapp
+
+**Terminal 2 (Backend):**
 ```bash
 cd backend
 # Make sure your venv is activated!
 uvicorn main:app --reload
-***Terminal 2 (Frontend):***
-# In the root directory
-npm run dev
-# songapp
+
+
