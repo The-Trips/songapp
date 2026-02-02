@@ -1,26 +1,45 @@
 // CreateUsername.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 function CreateUsername() {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get email passed from Registration page
+  const email = location.state?.email;
 
-  const handleCreateUsername = (e) => {
+  const handleCreateUsername = async (e) => {
     e.preventDefault();
+    if(!email) {
+        alert("Error: No email found. Please register again.");
+        navigate('/register');
+        return;
+    }
     setLoading(true);
 
-    // Simulate saving to DB
-    setTimeout(() => {
-        // Save to local storage for the demo
-        localStorage.setItem('app_username', username);
-        
-        alert("Username created! Please log in.");
-        navigate('/login');
+    try {
+        const response = await fetch('http://localhost:8000/api/create-username', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, username: username })
+        });
+
+        if (response.ok) {
+            alert("Account created! Please log in.");
+            navigate('/login');
+        } else {
+            const err = await response.json();
+            alert(err.detail || "Failed to create username");
+        }
+    } catch (error) {
+        alert("Network error");
+    } finally {
         setLoading(false);
-    }, 500);
+    }
   };
 
   return (
