@@ -1,182 +1,150 @@
+// src/Homepage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import './index.css';
+import { useNavigate } from 'react-router-dom';
 
-function AlbumPage() {
-  const { id } = useParams();
+function Homepage() {
   const navigate = useNavigate();
-  
-  const [albumData, setAlbumData] = useState(null);
-  const [reviews, setReviews] = useState([]);
-  
-  // Form State
-  const [rating, setRating] = useState(5); // Default 5/10
-  const [reviewText, setReviewText] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recommendedAlbums, setRecommendedAlbums] = useState([]);
+  const [trendingAlbums, setTrendingAlbums] = useState([]); 
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // 1. Fetch Album Info & Reviews on Load
+  // --- Hardcoded Friend Data (Placeholder for now) ---
+  const friendActivity = [
+    { id: 1, user: "Sarah", action: "liked", target: "Midnights", time: "2h ago" },
+    { id: 2, user: "Mike", action: "is listening to", target: "Jazz Vibes", time: "4h ago" },
+    { id: 3, user: "Jessica", action: "reviewed", target: "Renaissance", time: "1d ago" },
+    { id: 4, user: "David", action: "added", target: "Chill Mix", time: "2d ago" },
+  ];
+
   useEffect(() => {
-    // Fetch Album Details
-    fetch(`http://localhost:8000/api/albums/${id}`)
-      .then(res => res.json())
-      .then(data => setAlbumData(data))
-      .catch(err => console.error("Error fetching album:", err));
-
-    // Fetch Reviews
-    fetch(`http://localhost:8000/api/albums/${id}/reviews`)
-      .then(res => res.json())
-      .then(data => setReviews(data))
-      .catch(err => console.error("Error fetching reviews:", err));
-  }, [id]);
-
-  // 2. Handle Submit
-  const handlePostReview = async () => {
-    if (!reviewText.trim()) return;
-    setIsSubmitting(true);
-
-    const payload = {
-      album_id: id,
-      rating: parseInt(rating),
-      text: reviewText,
-      username: "TestUser" // This matches the dummy user we created
-    };
-
-    try {
-      const res = await fetch('http://localhost:8000/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        // Refresh the list immediately
-        const newReview = { 
-            user: "TestUser", 
-            text: reviewText, 
-            rating: rating, 
-            date: new Date().toISOString().split('T')[0] 
-        };
-        setReviews([newReview, ...reviews]);
-        setReviewText('');
-      } else {
-        alert("Failed to save review");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error connecting to server");
-    } finally {
-      setIsSubmitting(false);
+    // 1. Get Current User for the Header
+    const username = localStorage.getItem('app_username');
+    if (username) {
+        fetch(`http://localhost:8000/api/users/${username}`)
+            .then(res => res.json())
+            .then(data => setCurrentUser(data))
+            .catch(err => console.error(err));
     }
-  };
 
-  if (!albumData) return <div style={{padding: '50px', color:'white'}}>Loading...</div>;
+    // 2. Fetch Recommended
+    fetch('http://localhost:8000/api/albums/recommended')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setRecommendedAlbums(data))
+      .catch(err => setRecommendedAlbums([]));
+
+    // 3. Fetch Trending
+    fetch('http://localhost:8000/api/albums/trending')
+      .then(res => res.ok ? res.json() : [])
+      .then(data => setTrendingAlbums(data))
+      .catch(err => setTrendingAlbums([]));
+  }, []);
 
   return (
-    <div style={{ padding: '40px', color: 'white', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ padding: '30px', maxWidth: '1600px', margin: '0 auto', color: 'white' }}>
       
-      <button onClick={() => navigate(-1)} style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '1rem' }}>
-        ← Back
-      </button>
-
-      {/* Album Header */}
-      <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-end', marginBottom: '60px' }}>
-        <div style={{ 
-            width: '280px', height: '280px', 
-            backgroundColor: '#333',
-            backgroundImage: `url(${albumData.coverUrl})`,
-            backgroundSize: 'cover',
-            borderRadius: '12px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-        }}></div>
+      {/* HEADER */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <h1>Home</h1>
         
-        <div>
-            <h5 style={{textTransform: 'uppercase', color: '#aaa', letterSpacing: '2px'}}>Album</h5>
-            <h1 style={{ fontSize: '3.5rem', margin: '10px 0', fontWeight: '800' }}>{albumData.title}</h1>
-            <h3 style={{ color: '#ccc', fontWeight: 'normal' }}>{albumData.artist} • {albumData.releaseDate}</h3>
-            <p style={{ maxWidth: '600px', marginTop: '20px', color: '#bbb', lineHeight: '1.6' }}>{albumData.description || "No description available."}</p>
+        {/* Clickable Profile Picture */}
+        <div 
+            onClick={() => navigate('/profile')}
+            style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '10px', 
+                cursor: 'pointer',
+                background: '#222',
+                padding: '5px 15px 5px 5px',
+                borderRadius: '30px',
+                border: '1px solid #333'
+            }}
+        >
+             <div style={{ width: '40px', height: '40px', borderRadius: '50%', overflow: 'hidden', background: '#555' }}>
+                {currentUser ? (
+                    <img src={currentUser.avatar} alt="Me" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                    <div style={{ width: '100%', height: '100%', background: '#666' }}></div>
+                )}
+             </div>
+             <span style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                {currentUser ? currentUser.username : 'Guest'}
+             </span>
         </div>
-      </div>
+      </header>
 
-      <div style={{ borderTop: '1px solid #333', margin: '40px 0' }}></div>
-
-      {/* Review Section */}
-      <div style={{ display: 'flex', gap: '50px' }}>
+      {/* SPLIT LAYOUT: Music (Left) | Friends (Right) */}
+      <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
         
-        {/* Left: Input Form */}
-        <div style={{ flex: 1 }}>
-            <h3 style={{ marginBottom: '20px' }}>Rate & Review</h3>
-            
-            <div style={{ backgroundColor: '#1a1a1a', padding: '25px', borderRadius: '12px', border: '1px solid #333' }}>
-                
-                {/* 1-10 Slider */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Rating: <span style={{color: '#1db954', fontSize: '1.2rem'}}>{rating}/10</span></label>
-                    <input 
-                        type="range" min="1" max="10" 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
-                        style={{ width: '100%', cursor: 'pointer' }}
-                    />
+        {/* --- LEFT: MUSIC CONTENT --- */}
+        <div style={{ flex: 3, minWidth: '600px' }}>
+          
+          {/* Recommended */}
+          <section style={{ marginBottom: '40px' }}>
+            <h2>Recommended for You</h2>
+            <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', paddingBottom: '10px' }}>
+              {recommendedAlbums.length > 0 ? recommendedAlbums.map((album) => (
+                <div key={album.id} onClick={() => navigate(`/album/${album.id}`)} style={{ minWidth: '180px', cursor: 'pointer' }}>
+                  <div style={{ 
+                    height: '180px', 
+                    backgroundColor: '#333', 
+                    backgroundImage: `url(${album.coverUrl})`,
+                    backgroundSize: 'cover',
+                    borderRadius: '8px', 
+                    marginBottom: '10px',
+                    boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                  }}></div>
+                  <div style={{ fontWeight: 'bold' }}>{album.title}</div>
+                  <div style={{ color: '#aaa', fontSize: '0.9rem' }}>{album.artist}</div>
                 </div>
-
-                {/* Text Area */}
-                <textarea 
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Write your review here..."
-                    style={{ 
-                        width: '100%', height: '120px', padding: '15px', borderRadius: '8px', 
-                        backgroundColor: '#2a2a2a', border: '1px solid #444', color: 'white', 
-                        fontSize: '1rem', marginBottom: '15px', fontFamily: 'inherit'
-                    }}
-                />
-                
-                <button 
-                    onClick={handlePostReview} 
-                    disabled={isSubmitting}
-                    style={{ 
-                        width: '100%', padding: '12px', borderRadius: '25px', 
-                        backgroundColor: '#065fd4', color: 'white', border: 'none', 
-                        fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem',
-                        opacity: isSubmitting ? 0.7 : 1
-                    }}
-                >
-                    {isSubmitting ? "Posting..." : "Post Review"}
-                </button>
+              )) : <p style={{color: '#666'}}>Loading recommendations...</p>}
             </div>
+          </section>
+
+          {/* Trending */}
+          <section>
+            <h2>Trending Now</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '20px' }}>
+              {trendingAlbums.map((album) => (
+                <div key={album.id} onClick={() => navigate(`/album/${album.id}`)} style={{ cursor: 'pointer' }}>
+                  <div style={{ 
+                    height: '150px', 
+                    backgroundColor: '#444', 
+                    backgroundImage: `url(${album.coverUrl || ''})`,
+                    backgroundSize: 'cover',
+                    borderRadius: '8px', 
+                    marginBottom: '10px' 
+                  }}></div>
+                  <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{album.title}</div>
+                  <div style={{ color: '#aaa', fontSize: '0.85rem' }}>{album.artist}</div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
-        {/* Right: Review List */}
-        <div style={{ flex: 1.5 }}>
-            <h3 style={{ marginBottom: '20px' }}>Community Reviews ({reviews.length})</h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {reviews.length === 0 && <p style={{color: '#666'}}>No reviews yet. Be the first!</p>}
-                
-                {reviews.map((r, index) => (
-                    <div key={index} style={{ borderBottom: '1px solid #333', paddingBottom: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#888' }}></div>
-                                <span style={{ fontWeight: 'bold' }}>{r.user}</span>
-                            </div>
-                            <span style={{ 
-                                backgroundColor: r.rating >= 7 ? '#1db954' : '#b91d1d', 
-                                padding: '4px 10px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 'bold' 
-                            }}>
-                                {r.rating || '-'}/10
-                            </span>
-                        </div>
-                        <p style={{ color: '#ddd', lineHeight: '1.5', margin: '10px 0' }}>{r.text}</p>
-                        <div style={{ fontSize: '0.8rem', color: '#666' }}>{r.date}</div>
-                    </div>
-                ))}
-            </div>
-        </div>
+        {/* --- RIGHT: FRIEND ACTIVITY --- */}
+        <aside style={{ flex: 1, minWidth: '280px', maxWidth: '350px' }}>
+          <h3 style={{ marginBottom: '20px' }}>Friend Activity</h3>
+          <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '12px', border: '1px solid #333' }}>
+            {friendActivity.map(item => (
+              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '15px', paddingBottom: '15px', borderBottom: '1px solid #333' }}>
+                 <div style={{ width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#444' }}></div>
+                 <div style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
+                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{item.user}</span> 
+                    <span style={{ color: '#aaa' }}> {item.action} </span>
+                    <span style={{ fontWeight: 'bold', color: '#fff' }}>{item.target}</span>
+                    <div style={{ fontSize: '0.75rem', color: '#666', marginTop: '2px' }}>{item.time}</div>
+                 </div>
+              </div>
+            ))}
+            <div style={{ textAlign: 'center', color: '#065fd4', fontSize: '0.9rem', cursor: 'pointer', marginTop: '10px' }}>View all activity</div>
+          </div>
+        </aside>
 
       </div>
     </div>
   );
 }
 
-export default AlbumPage;
+export default Homepage;

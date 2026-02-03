@@ -6,23 +6,16 @@ function AlbumPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // Data State
   const [albumData, setAlbumData] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null); 
-
-  // UI State
-  const [rating, setRating] = useState(0);
-  const [hover, setHover] = useState(0);
-  const [reviewInput, setReviewInput] = useState('');
+  
+  // Form State
+  const [rating, setRating] = useState(5); // Default 5/10
+  const [reviewText, setReviewText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 1. Fetch Data on Load
+  // 1. Fetch Album Info & Reviews on Load
   useEffect(() => {
-    // Get Username from LocalStorage (set by Login.jsx)
-    const storedUser = localStorage.getItem('app_username');
-    if (storedUser) setCurrentUser(storedUser);
-
     // Fetch Album Details
     fetch(`http://localhost:8000/api/albums/${id}`)
       .then(res => res.json())
@@ -36,23 +29,16 @@ function AlbumPage() {
       .catch(err => console.error("Error fetching reviews:", err));
   }, [id]);
 
-  // 2. Handle Submit (Connected to Backend)
+  // 2. Handle Submit
   const handlePostReview = async () => {
-    // SECURITY CHECK: If no user is logged in, redirect to login
-    if (!currentUser) {
-        alert("You must be logged in to post a review.");
-        navigate('/login');
-        return;
-    }
-
-    if (!reviewInput.trim()) return;
+    if (!reviewText.trim()) return;
     setIsSubmitting(true);
 
     const payload = {
       album_id: id,
-      rating: rating,
-      text: reviewInput,
-      username: currentUser // Send the REAL username
+      rating: parseInt(rating),
+      text: reviewText,
+      username: "TestUser" // This matches the dummy user we created
     };
 
     try {
@@ -63,17 +49,15 @@ function AlbumPage() {
       });
 
       if (res.ok) {
-        // Optimistically update UI
+        // Refresh the list immediately
         const newReview = { 
-            id: Date.now(),
-            user: currentUser, 
-            text: reviewInput, 
+            user: "TestUser", 
+            text: reviewText, 
             rating: rating, 
-            date: "Just now"
+            date: new Date().toISOString().split('T')[0] 
         };
         setReviews([newReview, ...reviews]);
-        setReviewInput('');
-        setRating(0);
+        setReviewText('');
       } else {
         alert("Failed to save review");
       }
@@ -85,109 +69,111 @@ function AlbumPage() {
     }
   };
 
-  if (!albumData) return <div style={{padding: '50px', color: 'white'}}>Loading...</div>;
+  if (!albumData) return <div style={{padding: '50px', color:'white'}}>Loading...</div>;
 
   return (
-    <div className="main-content" style={{ padding: '20px', color: 'white', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ padding: '40px', color: 'white', maxWidth: '1000px', margin: '0 auto' }}>
       
-      {/* Back Button */}
-      <button 
-        onClick={() => navigate(-1)} 
-        style={{ marginBottom: '20px', background: 'transparent', border: '1px solid #fff', color: '#fff', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer' }}
-      >
+      <button onClick={() => navigate(-1)} style={{ marginBottom: '20px', background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '1rem' }}>
         ← Back
       </button>
 
       {/* Album Header */}
-      <div style={{ display: 'flex', gap: '30px', alignItems: 'flex-end', marginBottom: '30px' }}>
-         <div style={{ 
-            width: '200px', height: '200px', 
+      <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-end', marginBottom: '60px' }}>
+        <div style={{ 
+            width: '280px', height: '280px', 
             backgroundColor: '#333',
             backgroundImage: `url(${albumData.coverUrl})`,
             backgroundSize: 'cover',
             borderRadius: '12px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.5)'
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
         }}></div>
-        <div>
-            <h1 style={{ margin: '0 0 10px 0', fontSize: '2.5rem' }}>{albumData.title}</h1>
-            <h3 style={{ margin: 0, color: '#ccc', fontWeight: 'normal' }}>{albumData.artist}</h3>
-            <p style={{ color: '#888', marginTop: '5px' }}>{albumData.releaseDate}</p>
-        </div>
-      </div>
-
-      {/* Rating UI */}
-      <div className="rating-area" style={{ textAlign: 'center', padding: '20px', background: '#770505ff', borderRadius: '12px', border: '1px solid #9b3131ff' }}>
-        <h3 style={{ margin: '0 0 10px 0' }}>Rate this Album</h3>
-        <div style={{ fontSize: '2rem', cursor: 'pointer' }}>
-          {[...Array(5)].map((_, index) => {
-            const val = index + 1;
-            return (
-              <span key={index} 
-                style={{ color: val <= (hover || rating) ? "#ffc107" : "#e4e5e9", transition: "color 200ms", marginRight: '5px' }}
-                onClick={() => setRating(val)}
-                onMouseEnter={() => setHover(val)}
-                onMouseLeave={() => setHover(0)}
-              >★</span>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Reviews UI */}
-      <div className="reviews-section" style={{ marginTop: '30px' }}>
-        <h3>{reviews.length} Reviews</h3>
         
-        {/* Input */}
-        <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', marginTop: '20px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                {currentUser ? currentUser.charAt(0).toUpperCase() : '?'}
-            </div>
-            <div style={{ flex: 1 }}>
+        <div>
+            <h5 style={{textTransform: 'uppercase', color: '#aaa', letterSpacing: '2px'}}>Album</h5>
+            <h1 style={{ fontSize: '3.5rem', margin: '10px 0', fontWeight: '800' }}>{albumData.title}</h1>
+            <h3 style={{ color: '#ccc', fontWeight: 'normal' }}>{albumData.artist} • {albumData.releaseDate}</h3>
+            <p style={{ maxWidth: '600px', marginTop: '20px', color: '#bbb', lineHeight: '1.6' }}>{albumData.description || "No description available."}</p>
+        </div>
+      </div>
+
+      <div style={{ borderTop: '1px solid #333', margin: '40px 0' }}></div>
+
+      {/* Review Section */}
+      <div style={{ display: 'flex', gap: '50px' }}>
+        
+        {/* Left: Input Form */}
+        <div style={{ flex: 1 }}>
+            <h3 style={{ marginBottom: '20px' }}>Rate & Review</h3>
+            
+            <div style={{ backgroundColor: '#1a1a1a', padding: '25px', borderRadius: '12px', border: '1px solid #333' }}>
+                
+                {/* 1-10 Slider */}
+                <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Rating: <span style={{color: '#1db954', fontSize: '1.2rem'}}>{rating}/10</span></label>
+                    <input 
+                        type="range" min="1" max="10" 
+                        value={rating} 
+                        onChange={(e) => setRating(e.target.value)}
+                        style={{ width: '100%', cursor: 'pointer' }}
+                    />
+                </div>
+
+                {/* Text Area */}
                 <textarea 
-                    value={reviewInput} 
-                    onChange={(e) => setReviewInput(e.target.value)} 
-                    placeholder={currentUser ? `Review as ${currentUser}...` : "Please login to review"} 
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Write your review here..."
                     style={{ 
-                        width: '100%', padding: '12px', borderRadius: '8px', marginBottom: '10px',
-                        backgroundColor: '#222', border: '1px solid #444', color: 'white', fontFamily: 'inherit' 
-                    }} 
+                        width: '100%', height: '120px', padding: '15px', borderRadius: '8px', 
+                        backgroundColor: '#2a2a2a', border: '1px solid #444', color: 'white', 
+                        fontSize: '1rem', marginBottom: '15px', fontFamily: 'inherit'
+                    }}
                 />
+                
                 <button 
                     onClick={handlePostReview} 
-                    disabled={!reviewInput.trim() || isSubmitting} 
+                    disabled={isSubmitting}
                     style={{ 
-                        padding: '8px 20px', borderRadius: '20px', 
-                        background: currentUser ? '#065fd4' : '#555', 
-                        color: '#fff', border: 'none', 
-                        cursor: currentUser ? 'pointer' : 'not-allowed', 
-                        fontWeight: 'bold' 
+                        width: '100%', padding: '12px', borderRadius: '25px', 
+                        backgroundColor: '#065fd4', color: 'white', border: 'none', 
+                        fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem',
+                        opacity: isSubmitting ? 0.7 : 1
                     }}
                 >
-                    {isSubmitting ? "Posting..." : "Post"}
+                    {isSubmitting ? "Posting..." : "Post Review"}
                 </button>
             </div>
         </div>
 
-        {/* List */}
-        {reviews.map((r, index) => (
-            <div key={index} style={{ display: 'flex', gap: '15px', marginBottom: '20px', borderBottom: '1px solid #333', paddingBottom: '20px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#ce5c5c', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {r.user ? r.user.charAt(0).toUpperCase() : '?'}
-                </div>
-                <div>
-                    <div style={{ marginBottom: '5px' }}>
-                        <strong>{r.user}</strong> 
-                        <span style={{fontSize:'0.8em', color:'#888', marginLeft: '10px'}}>{r.date}</span>
-                        {r.rating > 0 && (
-                            <span style={{ marginLeft: '10px', color: '#ffc107' }}>
-                                {"★".repeat(r.rating)}
+        {/* Right: Review List */}
+        <div style={{ flex: 1.5 }}>
+            <h3 style={{ marginBottom: '20px' }}>Community Reviews ({reviews.length})</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {reviews.length === 0 && <p style={{color: '#666'}}>No reviews yet. Be the first!</p>}
+                
+                {reviews.map((r, index) => (
+                    <div key={index} style={{ borderBottom: '1px solid #333', paddingBottom: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#888' }}></div>
+                                <span style={{ fontWeight: 'bold' }}>{r.user}</span>
+                            </div>
+                            <span style={{ 
+                                backgroundColor: r.rating >= 7 ? '#1db954' : '#b91d1d', 
+                                padding: '4px 10px', borderRadius: '12px', fontSize: '0.85rem', fontWeight: 'bold' 
+                            }}>
+                                {r.rating || '-'}/10
                             </span>
-                        )}
+                        </div>
+                        <p style={{ color: '#ddd', lineHeight: '1.5', margin: '10px 0' }}>{r.text}</p>
+                        <div style={{ fontSize: '0.8rem', color: '#666' }}>{r.date}</div>
                     </div>
-                    <div style={{ color: '#ddd', lineHeight: '1.4' }}>{r.text}</div>
-                </div>
+                ))}
             </div>
-        ))}
+        </div>
+
       </div>
     </div>
   );
