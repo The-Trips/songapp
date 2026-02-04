@@ -6,6 +6,9 @@ import Register from './Registration';
 import CreateUsername from './CreateUsername';
 import Homepage from './homepage';
 import AlbumPage from './AlbumPage'; // <--- IMPORT THIS
+import DiscussionList from './DiscussionList';
+import DiscussionThread from './DiscussionThread';
+import CreateDiscussion from './CreateDiscussion';
 import './App.css';
 
 function App() {
@@ -36,15 +39,27 @@ function App() {
     <Router>
       <Routes>
         {/* Home Route */}
-        <Route 
-          path="/" 
-          element={isAuthenticated ? <Homepage onLogout={handleLogout} /> : <Navigate to="/login" />} 
+        <Route
+          path="/"
+          element={isAuthenticated ? <Homepage onLogout={handleLogout} /> : <Navigate to="/login" />}
         />
 
-        {/* --- ADD THIS ROUTE FOR THE ALBUM PAGE --- */}
-        <Route 
-          path="/album" 
-          element={isAuthenticated ? <AlbumPage /> : <Navigate to="/login" />} 
+        {/* Album and Discussion Routes */}
+        <Route
+          path="/album/:albumId"
+          element={isAuthenticated ? <AlbumPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/album/:albumId/discussions"
+          element={isAuthenticated ? <DiscussionList /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/album/:albumId/discussion/:discussionId"
+          element={isAuthenticated ? <DiscussionThread /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/album/:albumId/discussion/create"
+          element={isAuthenticated ? <CreateDiscussion /> : <Navigate to="/login" />}
         />
 
         {/* Auth Routes */}

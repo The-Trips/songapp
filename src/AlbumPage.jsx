@@ -1,10 +1,11 @@
-// AlbumPage.jsx
+// AlbumPage.jsx (UPDATED WITH DISCUSSIONS LINK)
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import './index.css';
 
 function AlbumPage() {
   const navigate = useNavigate();
+  const { albumId } = useParams(); // Get album ID from URL
   const [username, setUsername] = useState('User'); 
 
   useEffect(() => {
@@ -31,6 +32,10 @@ function AlbumPage() {
     setReviewInput('');
   };
 
+  const handleViewDiscussions = () => {
+    navigate(`/album/${albumId}/discussions`);
+  };
+
   return (
     <div className="main-content" style={{ padding: '20px', color: 'white', maxWidth: '800px', margin: '0 auto' }}>
       
@@ -43,6 +48,33 @@ function AlbumPage() {
       </button>
 
       <h1>Drake - New Album</h1>
+
+      {/* VIEW DISCUSSIONS BUTTON - NEW! */}
+      <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+        <button 
+          onClick={handleViewDiscussions}
+          style={{
+            width: '100%',
+            background: '#065fd4',
+            color: 'white',
+            border: 'none',
+            padding: '12px 20px',
+            borderRadius: '8px',
+            fontSize: '1em',
+            fontWeight: '500',
+            cursor: 'pointer',
+            transition: 'background 0.25s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px'
+          }}
+          onMouseEnter={(e) => e.target.style.background = '#0550bd'}
+          onMouseLeave={(e) => e.target.style.background = '#065fd4'}
+        >
+          💬 View Discussions on this Album
+        </button>
+      </div>
 
       {/* Spotify Embed */}
       <div style={{ marginTop: '20px', marginBottom: '20px' }}>

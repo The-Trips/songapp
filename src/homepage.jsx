@@ -107,7 +107,7 @@ function Homepage({YPLogout}) { // Receive logout function from App
                   Check out the latest release and see what others are saying.
                 </p>
                 <button 
-                  onClick={() => navigate('/album')}
+                  onClick={() => navigate('/album/999')}
                   style={{
                     padding: '10px 20px',
                     borderRadius: '20px',
@@ -131,7 +131,7 @@ function Homepage({YPLogout}) { // Receive logout function from App
               
               <div style={{ display: 'flex', gap: '20px', overflowX: 'auto', padding: '10px' }}>
                 {recommendedAlbums.map((album) => (
-                  <div key={album.id} onClick={() => navigate('/album')} style={{ minWidth: '180px', cursor: 'pointer' }}>
+                  <div key={album.id} onClick={() => navigate(`/album/${album.id}`)} style={{ minWidth: '180px', cursor: 'pointer' }}>
                     <div style={{ 
                       height: '180px', 
                       backgroundColor: album.coverColor, 
@@ -153,7 +153,7 @@ function Homepage({YPLogout}) { // Receive logout function from App
                 <h2 style={{ textAlign: 'left' }}>Trending Now</h2>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '15px' }}>
                   {trendingAlbums.map((album) => (
-                    <div key={album.id} onClick={() => navigate('/album')} style={{ cursor: 'pointer' }}>
+                    <div key={album.id} onClick={() => navigate(`/album/${album.id}`)} style={{ cursor: 'pointer' }}>
                       <div style={{ 
                         height: '140px', 
                         backgroundColor: album.coverColor, 
