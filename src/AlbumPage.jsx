@@ -1,3 +1,4 @@
+// src/AlbumPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './index.css';
@@ -10,35 +11,41 @@ function AlbumPage() {
   const [reviews, setReviews] = useState([]);
   
   // Form State
-  const [rating, setRating] = useState(5); // Default 5/10
+  const [rating, setRating] = useState(5); 
   const [reviewText, setReviewText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 1. Fetch Album Info & Reviews on Load
   useEffect(() => {
-    // Fetch Album Details
     fetch(`http://localhost:8000/api/albums/${id}`)
       .then(res => res.json())
       .then(data => setAlbumData(data))
       .catch(err => console.error("Error fetching album:", err));
 
-    // Fetch Reviews
     fetch(`http://localhost:8000/api/albums/${id}/reviews`)
       .then(res => res.json())
       .then(data => setReviews(data))
       .catch(err => console.error("Error fetching reviews:", err));
   }, [id]);
 
-  // 2. Handle Submit
+  // 2. Handle Submit Review
   const handlePostReview = async () => {
     if (!reviewText.trim()) return;
     setIsSubmitting(true);
+
+   const currentUsername = localStorage.getItem('app_username');
+
+    if (!currentUsername) {
+        alert("You must be logged in to leave a review!");
+        setIsSubmitting(false);
+        return;
+    }
 
     const payload = {
       album_id: id,
       rating: parseInt(rating),
       text: reviewText,
-      username: "TestUser" // This matches the dummy user we created
+      username: currentUsername 
     };
 
     try {
@@ -49,9 +56,8 @@ function AlbumPage() {
       });
 
       if (res.ok) {
-        // Refresh the list immediately
         const newReview = { 
-            user: "TestUser", 
+            user: currentUsername, 
             text: reviewText, 
             rating: rating, 
             date: new Date().toISOString().split('T')[0] 
@@ -79,7 +85,7 @@ function AlbumPage() {
       </button>
 
       {/* Album Header */}
-      <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-end', marginBottom: '60px' }}>
+      <div style={{ display: 'flex', gap: '40px', alignItems: 'flex-end', marginBottom: '30px' }}>
         <div style={{ 
             width: '280px', height: '280px', 
             backgroundColor: '#333',
@@ -97,6 +103,31 @@ function AlbumPage() {
         </div>
       </div>
 
+      {/* --- NEW: View Discussions Button --- */}
+      <div style={{ marginBottom: '40px' }}>
+        <button 
+          onClick={() => navigate(`/album/${id}/discussions`)}
+          style={{
+            background: '#2a2a2a',
+            color: 'white',
+            border: '1px solid #444',
+            padding: '12px 25px',
+            borderRadius: '30px',
+            fontSize: '1em',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            transition: 'background 0.2s'
+          }}
+          onMouseEnter={(e) => e.target.style.background = '#333'}
+          onMouseLeave={(e) => e.target.style.background = '#2a2a2a'}
+        >
+          💬 Discuss this Album
+        </button>
+      </div>
+
       <div style={{ borderTop: '1px solid #333', margin: '40px 0' }}></div>
 
       {/* Review Section */}
@@ -107,8 +138,6 @@ function AlbumPage() {
             <h3 style={{ marginBottom: '20px' }}>Rate & Review</h3>
             
             <div style={{ backgroundColor: '#1a1a1a', padding: '25px', borderRadius: '12px', border: '1px solid #333' }}>
-                
-                {/* 1-10 Slider */}
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Rating: <span style={{color: '#1db954', fontSize: '1.2rem'}}>{rating}/10</span></label>
                     <input 
@@ -119,7 +148,6 @@ function AlbumPage() {
                     />
                 </div>
 
-                {/* Text Area */}
                 <textarea 
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
@@ -173,7 +201,6 @@ function AlbumPage() {
                 ))}
             </div>
         </div>
-
       </div>
     </div>
   );
