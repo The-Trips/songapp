@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './index.css';
 
-function AlbumPage() {
+function AlbumPage({ isAuthenticated }) {
   const { id } = useParams();
   const navigate = useNavigate();
   
@@ -30,16 +30,14 @@ function AlbumPage() {
 
   // 2. Handle Submit Review
   const handlePostReview = async () => {
+    if (!isAuthenticated) {
+        alert("You must be logged in to leave a review!");
+        return;
+    }
     if (!reviewText.trim()) return;
     setIsSubmitting(true);
 
    const currentUsername = localStorage.getItem('app_username');
-
-    if (!currentUsername) {
-        alert("You must be logged in to leave a review!");
-        setIsSubmitting(false);
-        return;
-    }
 
     const payload = {
       album_id: id,
@@ -137,41 +135,57 @@ function AlbumPage() {
         <div style={{ flex: 1 }}>
             <h3 style={{ marginBottom: '20px' }}>Rate & Review</h3>
             
-            <div style={{ backgroundColor: '#1a1a1a', padding: '25px', borderRadius: '12px', border: '1px solid #333' }}>
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Rating: <span style={{color: '#1db954', fontSize: '1.2rem'}}>{rating}/10</span></label>
-                    <input 
-                        type="range" min="1" max="10" 
-                        value={rating} 
-                        onChange={(e) => setRating(e.target.value)}
-                        style={{ width: '100%', cursor: 'pointer' }}
-                    />
-                </div>
+            {isAuthenticated ? (
+                <div style={{ backgroundColor: '#1a1a1a', padding: '25px', borderRadius: '12px', border: '1px solid #333' }}>
+                    <div style={{ marginBottom: '20px' }}>
+                        <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Rating: <span style={{color: '#1db954', fontSize: '1.2rem'}}>{rating}/10</span></label>
+                        <input 
+                            type="range" min="1" max="10" 
+                            value={rating} 
+                            onChange={(e) => setRating(e.target.value)}
+                            style={{ width: '100%', cursor: 'pointer' }}
+                        />
+                    </div>
 
-                <textarea 
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Write your review here..."
-                    style={{ 
-                        width: '100%', height: '120px', padding: '15px', borderRadius: '8px', 
-                        backgroundColor: '#2a2a2a', border: '1px solid #444', color: 'white', 
-                        fontSize: '1rem', marginBottom: '15px', fontFamily: 'inherit'
-                    }}
-                />
-                
-                <button 
-                    onClick={handlePostReview} 
-                    disabled={isSubmitting}
-                    style={{ 
-                        width: '100%', padding: '12px', borderRadius: '25px', 
-                        backgroundColor: '#065fd4', color: 'white', border: 'none', 
-                        fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem',
-                        opacity: isSubmitting ? 0.7 : 1
-                    }}
-                >
-                    {isSubmitting ? "Posting..." : "Post Review"}
-                </button>
-            </div>
+                    <textarea 
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="Write your review here..."
+                        style={{ 
+                            width: '100%', height: '120px', padding: '15px', borderRadius: '8px', 
+                            backgroundColor: '#2a2a2a', border: '1px solid #444', color: 'white', 
+                            fontSize: '1rem', marginBottom: '15px', fontFamily: 'inherit'
+                        }}
+                    />
+                    
+                    <button 
+                        onClick={handlePostReview} 
+                        disabled={isSubmitting}
+                        style={{ 
+                            width: '100%', padding: '12px', borderRadius: '25px', 
+                            backgroundColor: '#065fd4', color: 'white', border: 'none', 
+                            fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem',
+                            opacity: isSubmitting ? 0.7 : 1
+                        }}
+                    >
+                        {isSubmitting ? "Posting..." : "Post Review"}
+                    </button>
+                </div>
+            ) : (
+                <div style={{ backgroundColor: '#1a1a1a', padding: '30px', borderRadius: '12px', border: '1px solid #333', textAlign: 'center' }}>
+                    <p style={{ color: '#ccc', marginBottom: '20px' }}>Want to share your thoughts?</p>
+                    <button 
+                        onClick={() => navigate('/login')}
+                        style={{ 
+                            padding: '10px 25px', borderRadius: '25px', 
+                            backgroundColor: '#770505', color: 'white', border: 'none', 
+                            fontWeight: 'bold', cursor: 'pointer'
+                        }}
+                    >
+                        Log in to Review
+                    </button>
+                </div>
+            )}
         </div>
 
         {/* Right: Review List */}

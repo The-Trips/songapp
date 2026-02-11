@@ -10,7 +10,7 @@ const countReplies = (replies) => {
   );
 };
 
-function DiscussionList() {
+function DiscussionList({ isAuthenticated }) {
   const navigate = useNavigate();
   const { id } = useParams(); // Changed from albumId to id to match Router
   const [discussions, setDiscussions] = useState([]);
@@ -47,6 +47,10 @@ function DiscussionList() {
   }, [id]);
 
   const handleCreateDiscussion = () => {
+    if (!isAuthenticated) {
+        navigate('/login');
+        return;
+    }
     navigate(`/album/${id}/discussion/create`);
   };
 
@@ -71,7 +75,7 @@ function DiscussionList() {
       </div>
 
       <button onClick={handleCreateDiscussion} className="create-discussion-btn">
-        + Start a New Discussion
+        {isAuthenticated ? "+ Start a New Discussion" : "Log in to Start a Discussion"}
       </button>
 
       {discussions.length === 0 ? (
@@ -80,7 +84,7 @@ function DiscussionList() {
           <h2>No discussions yet</h2>
           <p>Be the first to start a discussion about this album!</p>
           <button onClick={handleCreateDiscussion} className="primary-btn">
-            Start Discussion
+             {isAuthenticated ? "Start Discussion" : "Log in to Start Discussion"}
           </button>
         </div>
       ) : (

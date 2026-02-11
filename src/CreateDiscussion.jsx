@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import './discussions.css';
 
-function CreateDiscussion() {
+function CreateDiscussion({ isAuthenticated }) {
   const navigate = useNavigate();
   const { id } = useParams(); // Changed from albumId to id
   const [username, setUsername] = useState('User');
@@ -11,13 +11,13 @@ function CreateDiscussion() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+        navigate('/login');
+        return;
+    }
     const storedUser = localStorage.getItem('app_username');
     if (storedUser) setUsername(storedUser);
-    else {
-        alert("Please login to post.");
-        navigate('/login');
-    }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
