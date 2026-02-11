@@ -741,4 +741,69 @@
     overflow-y: auto;
   }
 
+  .comment-input-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #333;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .input-wrapper {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .comment-textarea,
+  .reply-textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    border-radius: 8px;
+    background: #0a0a0a;
+    border: 1px solid #444;
+    color: white;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  .user-avatar {
+    flex-shrink: 0;
+    /* Prevents avatar from shrinking */
+  }
+
+  .reply-input-container {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .comment-item {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    position: relative;
+    margin: 0 auto 15px auto;
+    max-width: 700px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .replies-container {
+    margin-left: 20px;
+    padding-left: 15px;
+    border-left: 2px solid #333;
+    max-width: calc(100% - 35px);
+    box-sizing: border-box;
+  }
 }

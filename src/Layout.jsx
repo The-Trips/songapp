@@ -2,7 +2,7 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 
-function Layout({ onLogout }) {
+function Layout({ onLogout, isAuthenticated }) {
   const navigate = useNavigate();
   const location = useLocation();
   const activeTab = location.pathname; 
@@ -14,6 +14,15 @@ function Layout({ onLogout }) {
     { name: "Activity", path: "/activity" },
     { name: "Profile", path: "/profile" }
   ];
+
+  const handleAuthAction = () => {
+    if (isAuthenticated) {
+      onLogout();
+      navigate('/'); // Navigate to homepage after logout
+    } else {
+      navigate('/login');
+    }
+  };
 
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100vw', backgroundColor: '#121212', color: 'white', overflow: 'hidden' }}>
@@ -42,7 +51,6 @@ function Layout({ onLogout }) {
                 cursor: 'pointer',
                 borderRadius: '8px',
                 marginBottom: '8px',
-                // Highlight the active tab
                 backgroundColor: activeTab === item.path ? '#282828' : 'transparent',
                 color: activeTab === item.path ? '#fff' : '#b3b3b3',
                 fontWeight: activeTab === item.path ? 'bold' : 'normal',
@@ -58,7 +66,7 @@ function Layout({ onLogout }) {
 
         <div style={{ marginTop: 'auto' }}>
           <button 
-            onClick={onLogout} 
+            onClick={handleAuthAction} 
             style={{ 
               background: 'transparent', 
               border: '1px solid #555', 
@@ -68,7 +76,7 @@ function Layout({ onLogout }) {
               cursor: 'pointer',
               width: '100%'
             }}>
-            Logout
+            {isAuthenticated ? 'Logout' : 'Login'}
           </button>
         </div>
       </nav>

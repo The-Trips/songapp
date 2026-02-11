@@ -1,7 +1,7 @@
 // src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './Layout'; 
+import Layout from './Layout';
 import Login from './Login';
 import Register from './Registration';
 import CreateUsername from './CreateUsername';
@@ -13,6 +13,11 @@ import ProfilePage from './ProfilePage';
 import DiscussionList from './DiscussionList';
 import CreateDiscussion from './CreateDiscussion';
 import DiscussionThread from './DiscussionThread';
+
+// Imported Communities
+import CommunitiesList from './CommunitiesList';
+import CommunityDetail from './CommunityDetail';
+import CreateCommunity from './CreateCommunity';
 
 import './App.css';
 
@@ -41,34 +46,43 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes (Login/Register) */}
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/create-username" element={<CreateUsername />} />
 
-        {/* Protected Routes (Wrapped in Layout) */}
-        {isAuthenticated ? (
-          <Route element={<Layout onLogout={handleLogout} />}>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            
-            {/* Album Page */}
-            <Route path="/album/:id" element={<AlbumPage />} />
+        {/* Public Routes (Wrapped in Layout, browsing allowed) */}
+       <Route element={<Layout onLogout={handleLogout} isAuthenticated={isAuthenticated} />}>
+          <Route path="/" element={<Homepage />} />
+          <Route path="/album/:id" element={<AlbumPage />} />
+          
+          {/* Community browsing - public */}
+          <Route path="/communities" element={<CommunitiesList />} />
+          <Route path="/community/:communityId" element={<CommunityDetail />} />
+          
+          {/* Discussion browsing - public */}
+          <Route path="/album/:id/discussions" element={<DiscussionList />} />
+          <Route path="/community/:communityId/discussion/:discussionId" element={<DiscussionThread />} />
+          <Route path="/album/:id/discussion/:discussionId" element={<DiscussionThread />} />
 
-            {/* --- DISCUSSION ROUTES --- */}
-            {/* List of discussions for a specific album */}
-            <Route path="/album/:id/discussions" element={<DiscussionList />} />
-            
-            {/* Create a new discussion for an album */}
-            <Route path="/album/:id/discussion/create" element={<CreateDiscussion />} />
-            
-            {/* View a specific discussion thread */}
-            <Route path="/album/:id/discussion/:discussionId" element={<DiscussionThread />} />
-            
-          </Route>
-        ) : (
-          <Route path="*" element={<Navigate to="/login" />} />
-        )}
+          {/* Protected Routes - require authentication */}
+          {isAuthenticated ? (
+            <>
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/community/create" element={<CreateCommunity />} />
+              <Route path="/community/:communityId/discussion/create" element={<CreateDiscussion />} />
+              <Route path="/album/:id/discussion/create" element={<CreateDiscussion />} />
+            </>
+          ) : (
+            <>
+              {/* Redirect creation routes to login */}
+              <Route path="/profile" element={<Navigate to="/login" replace/>} />
+              <Route path="/community/create" element={<Navigate to="/login" replace/>} />
+              <Route path="/community/:communityId/discussion/create" element={<Navigate to="/login" />} />
+              <Route path="/album/:id/discussion/create" element={<Navigate to="/login" />} />
+            </>
+          )}
+        </Route>
       </Routes>
     </Router>
   );
