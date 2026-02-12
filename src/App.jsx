@@ -8,12 +8,10 @@ import CreateUsername from './CreateUsername';
 import Homepage from './homepage';
 import AlbumPage from './AlbumPage';
 import ProfilePage from './ProfilePage';
-
-// --- NEW IMPORTS FOR DISCUSSIONS ---
-import DiscussionList from './DiscussionList';
-import CreateDiscussion from './CreateDiscussion';
-import DiscussionThread from './DiscussionThread';
-
+import CommunitiesList from './CommunitiesList'; // NEW
+import CommunityDetail from './CommunityDetail'; // NEW
+import CreateCommunity from './CreateCommunity'; // NEW
+import CreateDiscussion from './CreateDiscussion'; // NEW
 import './App.css';
 
 function App() {
@@ -33,42 +31,33 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('app_username');
     setIsAuthenticated(false);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{color:'white'}}>Loading...</div>;
 
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
         <Route path="/login" element={<Login onLogin={handleLogin} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/create-username" element={<CreateUsername />} />
 
-        {/* Protected Routes (Wrapped in Layout) */}
-        {isAuthenticated ? (
-          <Route element={<Layout onLogout={handleLogout} />}>
+        <Route element={<Layout isAuthenticated={isAuthenticated} onLogout={handleLogout} />}>
             <Route path="/" element={<Homepage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            
-            {/* Album Page */}
             <Route path="/album/:id" element={<AlbumPage />} />
+            
+            {/* NEW COMMUNITY ROUTES */}
+            <Route path="/communities" element={<CommunitiesList />} />
+            <Route path="/community/:id" element={<CommunityDetail />} />
+            <Route path="/create-community" element={isAuthenticated ? <CreateCommunity /> : <Navigate to="/login" />} />
+            <Route path="/community/:id/create-discussion" element={isAuthenticated ? <CreateDiscussion /> : <Navigate to="/login" />} />
 
-            {/* --- DISCUSSION ROUTES --- */}
-            {/* List of discussions for a specific album */}
-            <Route path="/album/:id/discussions" element={<DiscussionList />} />
-            
-            {/* Create a new discussion for an album */}
-            <Route path="/album/:id/discussion/create" element={<CreateDiscussion />} />
-            
-            {/* View a specific discussion thread */}
-            <Route path="/album/:id/discussion/:discussionId" element={<DiscussionThread />} />
-            
-          </Route>
-        ) : (
-          <Route path="*" element={<Navigate to="/login" />} />
-        )}
+            <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/login" />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );
