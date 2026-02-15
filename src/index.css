@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -97,7 +99,8 @@ button:focus-visible {
   transition: color 0.2s;
 }
 
-.nav-item:hover, .nav-item.active {
+.nav-item:hover,
+.nav-item.active {
   color: white;
   border-bottom: 2px solid #a1eafb;
 }
@@ -129,7 +132,7 @@ button:focus-visible {
   border: 1px solid #444;
   border-radius: 8px;
   width: 150px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   z-index: 100;
 }

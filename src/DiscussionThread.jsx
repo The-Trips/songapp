@@ -42,7 +42,7 @@ const RenderReplies = ({ replies, depth = 0, replyingTo, setReplyingTo, replyInp
   );
 };
 
-function DiscussionThread() {
+function DiscussionThread({ isAuthenticated }) {
   const navigate = useNavigate();
   const { id, discussionId } = useParams(); // using 'id' for albumId
   const [username, setUsername] = useState('User');
@@ -69,6 +69,10 @@ function DiscussionThread() {
   };
 
   const handlePostComment = () => {
+    if (!isAuthenticated) {
+        navigate('/login');
+        return;
+    }
     if (!commentInput.trim()) return;
     const newComment = { id: Date.now(), author: username, content: commentInput, createdAt: 'Just now', replies: [] };
     const updatedComments = [...comments, newComment];
@@ -86,6 +90,10 @@ function DiscussionThread() {
   };
 
   const handlePostReply = (parentId) => {
+    if (!isAuthenticated) {
+        navigate('/login');
+        return;
+    }
     if (!replyInputs[parentId]?.trim()) return;
     const newReply = { id: Date.now(), author: username, content: replyInputs[parentId], createdAt: 'Just now', replies: [] };
     const updatedComments = addReplyToComment(comments, parentId, newReply);
@@ -112,10 +120,18 @@ function DiscussionThread() {
 
       <div className="comments-section">
         <h3>Comments</h3>
-        <div className="comment-input-container">
-          <textarea value={commentInput} onChange={(e) => setCommentInput(e.target.value)} placeholder="Share your thoughts..." className="comment-textarea" />
-          <button onClick={handlePostComment} className="post-comment-btn">Post Comment</button>
-        </div>
+        
+        {isAuthenticated ? (
+            <div className="comment-input-container">
+                <textarea value={commentInput} onChange={(e) => setCommentInput(e.target.value)} placeholder="Share your thoughts..." className="comment-textarea" />
+                <button onClick={handlePostComment} className="post-comment-btn">Post Comment</button>
+            </div>
+        ) : (
+            <div style={{ backgroundColor: '#1a1a1a', padding: '20px', borderRadius: '8px', border: '1px solid #333', marginBottom: '30px', textAlign: 'center' }}>
+                <p style={{ color: '#aaa', marginBottom: '15px' }}>Found something to say?</p>
+                <button onClick={() => navigate('/login')} style={{ background: '#770505', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold' }}>Log in to Reply</button>
+            </div>
+        )}
 
         <div className="comments-list">
           {comments.map((comment) => (
@@ -125,9 +141,12 @@ function DiscussionThread() {
                 <span className="comment-author">{comment.author}</span>
               </div>
               <p className="comment-content">{comment.content}</p>
-              <button className="reply-btn" onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>💬 Reply</button>
               
-              {replyingTo === comment.id && (
+              {isAuthenticated && (
+                <button className="reply-btn" onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}>💬 Reply</button>
+              )}
+              
+              {replyingTo === comment.id && isAuthenticated && (
                 <div className="reply-input-container">
                     <textarea value={replyInputs[comment.id] || ''} onChange={(e) => setReplyInputs({...replyInputs, [comment.id]: e.target.value})} className="reply-textarea" />
                     <button onClick={() => handlePostReply(comment.id)} className="post-reply-btn">Post</button>
