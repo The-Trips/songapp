@@ -88,7 +88,7 @@ function CommunitiesList() {
     // first code: /community/create
     // second code: /create-community
     // Keep one as primary; fallback is easy to change.
-    navigate("/community/create");
+    navigate("/create-community");
   };
 
   const handleCommunityClick = (communityId) => {

@@ -176,7 +176,7 @@ function CommunityDetail() {
       navigate("/login");
       return;
     }
-    navigate(`/community/${communityIdRaw}/discussion/create`);
+    navigate(`/community/${communityIdRaw}/create-discussion`);
   };
 
   const handleDiscussionClick = (discussionId) => {
