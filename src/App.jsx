@@ -17,6 +17,7 @@ import CommunitiesList from "./CommunitiesList";
 import CommunityDetail from "./CommunityDetail";
 import CreateCommunity from "./CreateCommunity";
 import CreateDiscussion from "./CreateDiscussion";
+import DiscussionThread from "./DiscussionThread";
 import "./App.css";
 
 function App() {
@@ -94,6 +95,10 @@ function App() {
             element={
               isAuthenticated ? <CreateCommunity /> : <Navigate to="/login" />
             }
+          />
+          <Route
+            path="/community/:communityId/discussion/:discussionId"
+            element={<DiscussionThread />}
           />
           <Route
             path="/community/:id/create-discussion"
