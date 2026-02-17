@@ -1,4 +1,4 @@
-// DiscussionThread.jsx - FULLY API INTEGRATED
+// DiscussionThread.jsx - FIX APPLIED
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./discussions.css";
@@ -15,7 +15,6 @@ const countReplies = (replies) => {
 const formatTimeAgo = (dateString) => {
   if (!dateString) return "";
 
-  // If it's already formatted (like "2 hours ago"), return it
   if (
     typeof dateString === "string" &&
     (dateString.includes("ago") || dateString.includes("Just now"))
@@ -37,7 +36,6 @@ const formatTimeAgo = (dateString) => {
   return date.toLocaleDateString();
 };
 
-// ✅ CHANGE 1: Adapter to normalize API reply tree into the shape your UI expects
 const normalizeRepliesTree = (items) => {
   if (!Array.isArray(items)) return [];
 
@@ -46,7 +44,6 @@ const normalizeRepliesTree = (items) => {
     author: item.author ?? "Unknown",
     content: item.content ?? item.text ?? "",
     createdAt: item.createdAt,
-    // Keep your UI using `upvotes` without changing markup
     upvotes:
       typeof item.upvotes === "number"
         ? item.upvotes
@@ -55,7 +52,6 @@ const normalizeRepliesTree = (items) => {
   }));
 };
 
-// ✅ CHANGE 3: Adapter to normalize API thread into the shape your UI expects
 const normalizeThread = (thread) => {
   if (!thread) return null;
 
@@ -99,7 +95,7 @@ const RenderReplies = ({
           className="reply-item"
           style={{ position: "relative" }}
         >
-          {/* Upvote/Downvote for replies - TOP RIGHT */}
+          {/* Upvote/Downvote for replies */}
           <div
             style={{
               position: "absolute",
@@ -173,7 +169,6 @@ const RenderReplies = ({
             <p style={{ textAlign: "left" }}>{reply.content}</p>
           </div>
 
-          {/* Reply button only if under maxDepth */}
           <div style={{ marginTop: "10px" }}>
             {depth < maxDepth && (
               <button
@@ -208,7 +203,6 @@ const RenderReplies = ({
             </span>
           )}
 
-          {/* Reply input only if replying and under maxDepth */}
           {replyingTo === reply.id && depth < maxDepth && (
             <div
               className="reply-input-container"
@@ -279,7 +273,6 @@ const RenderReplies = ({
             </div>
           )}
 
-          {/* Recursive call */}
           <RenderReplies
             replies={reply.replies || []}
             depth={depth + 1}
@@ -316,13 +309,11 @@ function DiscussionThread() {
   const [userVotes, setUserVotes] = useState({});
 
   useEffect(() => {
-    // Get username from localStorage
     const storedUser = localStorage.getItem("app_username");
     if (storedUser) setUsername(storedUser);
 
     fetch(`http://localhost:8000/api/threads/${discussionId}/replies`)
       .then(async (res) => {
-        // If server returns non-JSON (like an HTML error page), this helps you see it.
         if (!res.ok) {
           const text = await res.text();
           throw new Error(
@@ -332,7 +323,6 @@ function DiscussionThread() {
         return res.json();
       })
       .then((data) => {
-        // ✅ Expect ONLY { thread, replies }
         if (!data || !data.thread) {
           console.error("Expected { thread, replies } but got:", data);
           throw new Error("Missing `thread` in /api/threads response");
@@ -373,6 +363,7 @@ function DiscussionThread() {
     return total + 1 + countReplies(comment.replies || []);
   }, 0);
 
+  // --- FIXED FUNCTION: POST COMMENT ---
   const handlePostComment = async () => {
     if (!commentInput.trim()) return;
 
@@ -383,11 +374,12 @@ function DiscussionThread() {
       return;
     }
 
+    // UPDATED PAYLOAD to match schema.py (snake_case)
     const payload = {
-      content: commentInput,
-      author: username,
-      threadId: parseInt(discussionId),
-      parentCommentId: null, // Top-level comment
+      text: commentInput,           // was content
+      username: username,           // was author
+      thread_id: parseInt(discussionId), // was threadId
+      parent_reply_id: null,        // was parentCommentId
     };
 
     try {
@@ -398,7 +390,6 @@ function DiscussionThread() {
       });
 
       if (res.ok) {
-        // Refresh comments by fetching the thread again
         const refreshRes = await fetch(
           `http://localhost:8000/api/threads/${discussionId}/replies`,
         );
@@ -407,7 +398,8 @@ function DiscussionThread() {
         setComments(normalizeRepliesTree(data.replies || []));
         setCommentInput("");
       } else {
-        alert("Failed to post comment");
+        const errData = await res.json();
+        alert(`Failed to post comment: ${errData.detail || "Unknown error"}`);
       }
     } catch (err) {
       console.error(err);
@@ -415,6 +407,7 @@ function DiscussionThread() {
     }
   };
 
+  // --- FIXED FUNCTION: POST REPLY ---
   const handlePostReply = async (parentId, currentDepth) => {
     if (!replyInputs[parentId]?.trim()) return;
     if (currentDepth >= MAX_DEPTH) return;
@@ -426,11 +419,12 @@ function DiscussionThread() {
       return;
     }
 
+    // UPDATED PAYLOAD to match schema.py (snake_case)
     const payload = {
-      content: replyInputs[parentId],
-      author: username,
-      threadId: parseInt(discussionId),
-      parentCommentId: parentId,
+      text: replyInputs[parentId],  // was content
+      username: username,           // was author
+      thread_id: parseInt(discussionId), // was threadId
+      parent_reply_id: parentId,    // was parentCommentId
     };
 
     try {
@@ -441,7 +435,6 @@ function DiscussionThread() {
       });
 
       if (res.ok) {
-        // Refresh comments
         const refreshRes = await fetch(
           `http://localhost:8000/api/threads/${discussionId}/replies`,
         );
@@ -452,7 +445,8 @@ function DiscussionThread() {
         setReplyInputs((prev) => ({ ...prev, [parentId]: "" }));
         setReplyingTo(null);
       } else {
-        alert("Failed to post reply");
+        const errData = await res.json();
+        alert(`Failed to post reply: ${errData.detail || "Unknown error"}`);
       }
     } catch (err) {
       console.error(err);
@@ -476,16 +470,13 @@ function DiscussionThread() {
       navigate("/login");
       return;
     }
-
     setUserVotes((prev) => {
       const currentVote = prev[commentId];
       if (currentVote === "upvote") {
-        // Remove upvote
         const newVotes = { ...prev };
         delete newVotes[commentId];
         return newVotes;
       } else {
-        // Add upvote (or switch from downvote)
         return { ...prev, [commentId]: "upvote" };
       }
     });
@@ -498,16 +489,13 @@ function DiscussionThread() {
       navigate("/login");
       return;
     }
-
     setUserVotes((prev) => {
       const currentVote = prev[commentId];
       if (currentVote === "downvote") {
-        // Remove downvote
         const newVotes = { ...prev };
         delete newVotes[commentId];
         return newVotes;
       } else {
-        // Add downvote (or switch from upvote)
         return { ...prev, [commentId]: "downvote" };
       }
     });
@@ -570,7 +558,6 @@ function DiscussionThread() {
         margin: "0 auto",
       }}
     >
-      {/* Back Button */}
       <button
         onClick={() => navigate(`/community/${communityId}`)}
         className="back-button"
@@ -587,7 +574,6 @@ function DiscussionThread() {
         ← Back to {community.name}
       </button>
 
-      {/* Discussion Header */}
       <div className="thread-header" style={{ marginBottom: "20px" }}>
         <h1 style={{ fontSize: "2rem", marginBottom: "10px" }}>
           {discussion.title}
@@ -626,7 +612,6 @@ function DiscussionThread() {
         </div>
       </div>
 
-      {/* Original Post */}
       <div
         className="original-post"
         style={{
@@ -638,7 +623,6 @@ function DiscussionThread() {
           position: "relative",
         }}
       >
-        {/* Upvote/Downvote for original post - TOP RIGHT */}
         <div
           style={{
             position: "absolute",
@@ -714,13 +698,11 @@ function DiscussionThread() {
         </p>
       </div>
 
-      {/* Comments Section */}
       <div className="comments-section">
         <h3 style={{ marginBottom: "20px" }}>
           {totalCommentCount} {totalCommentCount === 1 ? "Comment" : "Comments"}
         </h3>
 
-        {/* Add Comment Input */}
         <div
           className="comment-input-container"
           style={{
@@ -787,7 +769,6 @@ function DiscussionThread() {
           </div>
         </div>
 
-        {/* Comments List */}
         <div className="comments-list">
           {comments.length === 0 ? (
             <div
@@ -809,7 +790,7 @@ function DiscussionThread() {
                   position: "relative",
                 }}
               >
-                {/* Upvote/Downvote for comments - TOP RIGHT */}
+                {/* Upvote/Downvote for comments */}
                 <div
                   style={{
                     position: "absolute",
@@ -925,7 +906,6 @@ function DiscussionThread() {
                   </p>
                 </div>
 
-                {/* Reply button */}
                 <button
                   className="reply-btn"
                   onClick={() =>
@@ -943,7 +923,6 @@ function DiscussionThread() {
                   💬 Reply
                 </button>
 
-                {/* Reply Input */}
                 {replyingTo === comment.id && (
                   <div
                     className="reply-input-container"
