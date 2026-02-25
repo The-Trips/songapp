@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './discussions.css';
-//////// Community creation connected to API ///////
-function CreateCommunity() {
+import './threads.css';
+//////// Scene creation connected to API ///////
+function CreateScene() {
   const navigate = useNavigate();
   const [username, setUsername] = useState('User');
   const [formData, setFormData] = useState({
@@ -21,7 +21,7 @@ function CreateCommunity() {
     // Check if user is authenticated
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     if (isAuthenticated !== 'true') {
-      alert('Please log in to create a community');
+      alert('Please log in to create a scene');
       navigate('/login');
     }
   }, [navigate]);
@@ -47,11 +47,11 @@ function CreateCommunity() {
 
     // Validate name
     if (!formData.name.trim()) {
-      newErrors.name = 'Community name is required';
+      newErrors.name = 'Scene name is required';
     } else if (formData.name.trim().length < 3) {
-      newErrors.name = 'Community name must be at least 3 characters';
+      newErrors.name = 'Scene name must be at least 3 characters';
     } else if (formData.name.trim().length > 100) {
-      newErrors.name = 'Community name must be less than 100 characters';
+      newErrors.name = 'Scene name must be less than 100 characters';
     }
 
     // Validate description
@@ -95,7 +95,7 @@ function CreateCommunity() {
     };
 
     try {
-      const res = await fetch('http://localhost:8000/api/communities', {
+      const res = await fetch('http://localhost:8000/api/scenes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -104,16 +104,16 @@ function CreateCommunity() {
       if (res.ok) {
         const data = await res.json();
 
-        // Auto-join the community (localStorage for now)
-        const savedJoined = localStorage.getItem(`joined_communities_${username}`) || '[]';
+        // Auto-join the scene (localStorage for now)
+        const savedJoined = localStorage.getItem(`joined_scenes_${username}`) || '[]';
         const joinedList = JSON.parse(savedJoined);
         joinedList.push(data.id);
-        localStorage.setItem(`joined_communities_${username}`, JSON.stringify(joinedList));
+        localStorage.setItem(`joined_scenes_${username}`, JSON.stringify(joinedList));
 
-        // Navigate to new community
-        navigate(`/community/${data.id}`);
+        // Navigate to new scene
+        navigate(`/scene/${data.id}`);
       } else {
-        alert("Failed to create community");
+        alert("Failed to create scene");
         setIsSubmitting(false);
       }
     } catch (err) {
@@ -124,7 +124,7 @@ function CreateCommunity() {
   };
 
   const handleCancel = () => {
-    navigate('/communities');
+    navigate('/scenes');
   };
 
   return (
@@ -148,12 +148,12 @@ function CreateCommunity() {
           marginBottom: '20px'
         }}
       >
-        ← Back to Communities
+        ← Back to Scenes
       </button>
 
       {/* Header */}
       <div style={{ marginBottom: '30px' }}>
-        <h1>Create a Community</h1>
+        <h1>Create a Scene</h1>
         <p style={{ color: '#ccc', marginTop: '10px' }}>
           Build a space for fans to connect and discuss music
         </p>
@@ -162,10 +162,10 @@ function CreateCommunity() {
       {/* Form */}
       <form onSubmit={handleSubmit}>
 
-        {/* Community Name */}
+        {/* Scene Name */}
         <div style={{ marginBottom: '25px' }}>
           <label
-            htmlFor="community-name"
+            htmlFor="scene-name"
             style={{
               display: 'block',
               marginBottom: '8px',
@@ -173,10 +173,10 @@ function CreateCommunity() {
               fontSize: '0.95rem'
             }}
           >
-            Community Name *
+            Scene Name *
           </label>
           <input
-            id="community-name"
+            id="scene-name"
             type="text"
             name="name"
             value={formData.name}
@@ -212,7 +212,7 @@ function CreateCommunity() {
         {/* Description */}
         <div style={{ marginBottom: '25px' }}>
           <label
-            htmlFor="community-description"
+            htmlFor="scene-description"
             style={{
               display: 'block',
               marginBottom: '8px',
@@ -223,11 +223,11 @@ function CreateCommunity() {
             Description *
           </label>
           <textarea
-            id="community-description"
+            id="scene-description"
             name="description"
             value={formData.description}
             onChange={handleInputChange}
-            placeholder="Describe what this community is about, what topics will be discussed, and who should join..."
+            placeholder="Describe what this scene is about, what topics will be discussed, and who should join..."
             rows={5}
             maxLength={500}
             style={{
@@ -261,7 +261,7 @@ function CreateCommunity() {
         {/* Image URL */}
         <div style={{ marginBottom: '30px' }}>
           <label
-            htmlFor="community-image"
+            htmlFor="scene-image"
             style={{
               display: 'block',
               marginBottom: '8px',
@@ -269,10 +269,10 @@ function CreateCommunity() {
               fontSize: '0.95rem'
             }}
           >
-            Community Image URL (Optional)
+            Scene Image URL (Optional)
           </label>
           <input
-            id="community-image"
+            id="scene-image"
             type="text"
             name="imageUrl"
             value={formData.imageUrl}
@@ -295,7 +295,7 @@ function CreateCommunity() {
             </span>
           ) : (
             <span style={{ color: '#666', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>
-              Add a banner image to make your community stand out
+              Add a banner image to make your scene stand out
             </span>
           )}
 
@@ -324,7 +324,7 @@ function CreateCommunity() {
           maxWidth: '400px',
           margin: '0 auto 30px auto'
         }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>Community Guidelines</h3>
+          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>Scene Guidelines</h3>
           <ul style={{
             paddingLeft: '20px',
             fontSize: '0.9rem',
@@ -332,10 +332,10 @@ function CreateCommunity() {
             lineHeight: '1.6',
             listStyle: 'none'
           }}>
-            <li>Keep discussions respectful and on-topic</li>
+            <li>Keep threads respectful and on-topic</li>
             <li>No spam, self-promotion, or offensive content</li>
             <li>Welcome all members and encourage participation</li>
-            <li>Communities that violate guidelines may be removed</li>
+            <li>Scenes that violate guidelines may be removed</li>
           </ul>
         </div>
 
@@ -379,7 +379,7 @@ function CreateCommunity() {
               fontSize: '0.95rem'
             }}
           >
-            {isSubmitting ? 'Creating...' : 'Create Community'}
+            {isSubmitting ? 'Creating...' : 'Create Scene'}
           </button>
         </div>
       </form>
@@ -387,4 +387,4 @@ function CreateCommunity() {
   );
 }
 
-export default CreateCommunity;
+export default CreateScene;

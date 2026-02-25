@@ -1,14 +1,14 @@
-// CreateDiscussion.jsx - CONNECTED TO API
+// CreateThread.jsx - CONNECTED TO API
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import './discussions.css';
+import './threads.css';
 
-////// Dicussion creation updated to connect API ///////////
-function CreateDiscussion() {
+////// Thread creation updated to connect API ///////////
+function CreateThread() {
   const navigate = useNavigate();
-  const { id: communityId } = useParams(); // Extract 'id' from URL but keep using 'communityId' in code
+  const { id: sceneId } = useParams(); // Extract 'id' from URL but keep using 'sceneId' in code
   const [username, setUsername] = useState('User');
-  const [community, setCommunity] = useState(null);
+  const [scene, setScene] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     content: ''
@@ -24,29 +24,29 @@ function CreateDiscussion() {
     // Check if user is authenticated
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     if (isAuthenticated !== 'true') {
-      alert('Please log in to create a discussion');
+      alert('Please log in to start a thread');
       navigate('/login');
       return;
     }
 
-    // Load community data from API
-    fetchCommunity();
-  }, [communityId, navigate]);
+    // Load scene data from API
+    fetchScene();
+  }, [sceneId, navigate]);
 
-  const fetchCommunity = async () => {
+  const fetchScene = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/communities/${communityId}`);
+      const res = await fetch(`http://localhost:8000/api/scenes/${sceneId}`);
       if (res.ok) {
         const data = await res.json();
-        setCommunity(data);
+        setScene(data);
       } else {
-        alert('Community not found');
-        navigate('/communities');
+        alert('Scene not found');
+        navigate('/scenes');
       }
     } catch (err) {
-      console.error('Error fetching community:', err);
-      alert('Error loading community');
-      navigate('/communities');
+      console.error('Error fetching scene:', err);
+      alert('Error loading scene');
+      navigate('/scenes');
     }
   };
 
@@ -105,7 +105,7 @@ function CreateDiscussion() {
       title: formData.title.trim(),
       text: formData.content.trim(),
       username: username,
-      community_id: parseInt(communityId)
+      scene_id: parseInt(sceneId)
     };
 
     try {
@@ -119,25 +119,25 @@ function CreateDiscussion() {
       if (res.ok) {
         const data = await res.json();
         
-        // Navigate to the new discussion
-        navigate(`/community/${communityId}/discussion/${data.id}`);
+        // Navigate to the new thread
+        navigate(`/scene/${sceneId}/thread/${data.id}`);
       } else {
         const errorData = await res.json();
-        alert(`Failed to create discussion: ${errorData.detail || 'Unknown error'}`);
+        alert(`Failed to start thread: ${errorData.detail || 'Unknown error'}`);
         setIsSubmitting(false);
       }
     } catch (err) {
-      console.error('Error creating discussion:', err);
+      console.error('Error starting thread:', err);
       alert('Error connecting to server');
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    navigate(`/community/${communityId}`);
+    navigate(`/scene/${sceneId}`);
   };
 
-  if (!community) {
+  if (!scene) {
     return (
       <div className="main-content" style={{ padding: '20px', color: 'white', maxWidth: '800px', margin: '0 auto' }}>
         <p>Loading...</p>
@@ -166,24 +166,24 @@ function CreateDiscussion() {
           marginBottom: '20px'
         }}
       >
-        ← Back to {community.name}
+        ← Back to {scene.name}
       </button>
 
       {/* Header */}
       <div style={{ marginBottom: '30px' }}>
-        <h1>Start a Discussion</h1>
+        <h1>Start a Thread</h1>
         <p style={{ color: '#ccc', marginTop: '10px' }}>
-          in <span style={{ color: '#1db954', fontWeight: 'bold' }}>{community.name}</span>
+          in <span style={{ color: '#1db954', fontWeight: 'bold' }}>{scene.name}</span>
         </p>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit}>
         
-        {/* Discussion Title */}
+        {/* Thread Title */}
         <div style={{ marginBottom: '25px' }}>
           <label 
-            htmlFor="discussion-title"
+            htmlFor="thread-title"
             style={{ 
               display: 'block', 
               marginBottom: '8px', 
@@ -191,10 +191,10 @@ function CreateDiscussion() {
               fontSize: '0.95rem'
             }}
           >
-            Discussion Title *
+            Thread Title *
           </label>
           <input
-            id="discussion-title"
+            id="thread-title"
             type="text"
             name="title"
             value={formData.title}
@@ -227,10 +227,10 @@ function CreateDiscussion() {
           </div>
         </div>
 
-        {/* Discussion Content */}
+        {/* Thread Content */}
         <div style={{ marginBottom: '25px' }}>
           <label 
-            htmlFor="discussion-content"
+            htmlFor="thread-content"
             style={{ 
               display: 'block', 
               marginBottom: '8px', 
@@ -241,7 +241,7 @@ function CreateDiscussion() {
             Your Thoughts *
           </label>
           <textarea
-            id="discussion-content"
+            id="thread-content"
             name="content"
             value={formData.content}
             onChange={handleInputChange}
@@ -276,7 +276,7 @@ function CreateDiscussion() {
           </div>
         </div>
 
-        {/* Discussion Guidelines */}
+        {/* Thread Guidelines */}
         <div style={{ 
           background: '#1a1a1a', 
           border: '1px solid #333', 
@@ -286,7 +286,7 @@ function CreateDiscussion() {
           maxWidth: '400px',
           margin: '0 auto 30px auto'
         }}>
-          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>Discussion Guidelines</h3>
+          <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>Thread Guidelines</h3>
           <ul style={{ 
             paddingLeft: '20px', 
             fontSize: '0.85rem', 
@@ -294,10 +294,10 @@ function CreateDiscussion() {
             lineHeight: '1.6',
             listStyle: 'none'
           }}>
-            <li>Be respectful and constructive in your discussions</li>
-            <li>Stay on topic - keep discussions related to {community.name}</li>
+            <li>Be respectful and constructive in your threads</li>
+            <li>Stay on topic - keep threads related to {scene.name}</li>
             <li>No spam, self-promotion, or offensive content</li>
-            <li>Use clear, descriptive titles for your discussions</li>
+            <li>Use clear, descriptive titles for your threads</li>
           </ul>
         </div>
 
@@ -341,7 +341,7 @@ function CreateDiscussion() {
               fontSize: '0.95rem'
             }}
           >
-            {isSubmitting ? 'Posting...' : 'Post Discussion'}
+            {isSubmitting ? 'Posting...' : 'Post Thread'}
           </button>
         </div>
       </form>
@@ -349,4 +349,4 @@ function CreateDiscussion() {
   );
 }
 
-export default CreateDiscussion;
+export default CreateThread;

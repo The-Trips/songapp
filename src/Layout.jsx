@@ -36,7 +36,7 @@ function Layout({ onLogout, isAuthenticated }) {
   const navItems = [
     { name: "Home", path: "/", icon: <Home size={20} /> },
     { name: "Search/Explore", path: "/search", icon: <Search size={20} /> },
-    { name: "Communities", path: "/communities", icon: <Users size={20} /> },
+    { name: "Scenes", path: "/scenes", icon: <Users size={20} /> },
     { name: "Activity", path: "/activity", icon: <Bell size={20} /> },
     { name: "Profile", path: "/profile", icon: <User size={20} /> },
   ];

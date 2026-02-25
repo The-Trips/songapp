@@ -68,12 +68,12 @@ function AlbumPage({ isAuthenticated }) {
     setShowReviewModal(true);
   };
 
-  const handleCommunityClick = () => {
-    // If the album is linked to a scene/community, go there. Otherwise go to list.
+  const handleSceneClick = () => {
+    // If the album is linked to a scene, go there. Otherwise go to list.
     if (albumData && albumData.sceneId) {
-      navigate(`/community/${albumData.sceneId}`);
+      navigate(`/scene/${albumData.sceneId}`);
     } else {
-      navigate("/communities");
+      navigate("/scenes");
     }
   };
 
@@ -235,12 +235,12 @@ function AlbumPage({ isAuthenticated }) {
             >
               {currentUsername ? "★ Rate & Review" : "Log in to Review"}
             </button>
-            {/* NEW COMMUNITY BUTTON */}
+            {/* NEW SCENE BUTTON */}
             <button
-              onClick={handleCommunityClick}
+              onClick={handleSceneClick}
               style={styles.secondaryButton}
             >
-              👥 Community
+              👥 Scene
             </button>
           </div>
         </div>
@@ -296,7 +296,7 @@ function AlbumPage({ isAuthenticated }) {
             marginBottom: "20px",
           }}
         >
-          <h3 style={styles.sectionTitle}>Community Reviews</h3>
+          <h3 style={styles.sectionTitle}>Scene Reviews</h3>
           <span style={{ color: "#aaa" }}>
             Avg Rating: <b style={{ color: "white" }}>{averageRating}</b> / 5
           </span>

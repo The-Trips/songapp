@@ -1,7 +1,7 @@
-// DiscussionThread.jsx - FIX APPLIED
+// ThreadDetail.jsx - FIX APPLIED
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "./discussions.css";
+import "./threads.css";
 
 // Counts nested replies for a comment
 const countReplies = (replies) => {
@@ -294,13 +294,13 @@ const RenderReplies = ({
   );
 };
 
-function DiscussionThread() {
+function ThreadDetail() {
   const MAX_DEPTH = 3;
   const navigate = useNavigate();
-  const { communityId, discussionId } = useParams();
+  const { sceneId, threadId } = useParams();
   const [username, setUsername] = useState("User");
-  const [community, setCommunity] = useState(null);
-  const [discussion, setDiscussion] = useState(null);
+  const [scene, setScene] = useState(null);
+  const [thread, setThread] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
   const [replyingTo, setReplyingTo] = useState(null);
@@ -312,7 +312,7 @@ function DiscussionThread() {
     const storedUser = localStorage.getItem("app_username");
     if (storedUser) setUsername(storedUser);
 
-    fetch(`http://localhost:8000/api/threads/${discussionId}/replies`)
+    fetch(`http://localhost:8000/api/threads/${threadId}/replies`)
       .then(async (res) => {
         if (!res.ok) {
           const text = await res.text();
@@ -328,7 +328,7 @@ function DiscussionThread() {
           throw new Error("Missing `thread` in /api/threads response");
         }
 
-        setDiscussion(normalizeThread(data.thread));
+        setThread(normalizeThread(data.thread));
         setComments(normalizeRepliesTree(data.replies || []));
 
         if (!data.thread.sceneId) {
@@ -337,7 +337,7 @@ function DiscussionThread() {
         }
 
         return fetch(
-          `http://localhost:8000/api/communities/${data.thread.sceneId}`,
+          `http://localhost:8000/api/scenes/${data.thread.sceneId}`,
         );
       })
       .then(async (res) => {
@@ -349,15 +349,15 @@ function DiscussionThread() {
         }
         return res.json();
       })
-      .then((scene) => {
-        setCommunity(scene);
+      .then((sceneData) => {
+        setScene(sceneData);
         setIsLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching discussion:", err);
+        console.error("Error fetching thread:", err);
         setIsLoading(false);
       });
-  }, [discussionId]);
+  }, [threadId]);
 
   const totalCommentCount = comments.reduce((total, comment) => {
     return total + 1 + countReplies(comment.replies || []);
@@ -378,7 +378,7 @@ function DiscussionThread() {
     const payload = {
       text: commentInput,           // was content
       username: username,           // was author
-      thread_id: parseInt(discussionId), // was threadId
+      thread_id: parseInt(threadId), // was threadId
       parent_reply_id: null,        // was parentCommentId
     };
 
@@ -391,10 +391,10 @@ function DiscussionThread() {
 
       if (res.ok) {
         const refreshRes = await fetch(
-          `http://localhost:8000/api/threads/${discussionId}/replies`,
+          `http://localhost:8000/api/threads/${threadId}/replies`,
         );
         const data = await refreshRes.json();
-        setDiscussion(normalizeThread(data.thread));
+        setThread(normalizeThread(data.thread));
         setComments(normalizeRepliesTree(data.replies || []));
         setCommentInput("");
       } else {
@@ -423,7 +423,7 @@ function DiscussionThread() {
     const payload = {
       text: replyInputs[parentId],  // was content
       username: username,           // was author
-      thread_id: parseInt(discussionId), // was threadId
+      thread_id: parseInt(threadId), // was threadId
       parent_reply_id: parentId,    // was parentCommentId
     };
 
@@ -436,11 +436,11 @@ function DiscussionThread() {
 
       if (res.ok) {
         const refreshRes = await fetch(
-          `http://localhost:8000/api/threads/${discussionId}/replies`,
+          `http://localhost:8000/api/threads/${threadId}/replies`,
         );
         const data = await refreshRes.json();
 
-        setDiscussion(normalizeThread(data.thread));
+        setThread(normalizeThread(data.thread));
         setComments(normalizeRepliesTree(data.replies));
         setReplyInputs((prev) => ({ ...prev, [parentId]: "" }));
         setReplyingTo(null);
@@ -512,12 +512,12 @@ function DiscussionThread() {
           margin: "0 auto",
         }}
       >
-        <p>Loading discussion...</p>
+        <p>Loading thread...</p>
       </div>
     );
   }
 
-  if (!discussion || !community) {
+  if (!thread || !scene) {
     return (
       <div
         className="main-content"
@@ -528,9 +528,9 @@ function DiscussionThread() {
           margin: "0 auto",
         }}
       >
-        <p>Discussion not found</p>
+        <p>Thread not found</p>
         <button
-          onClick={() => navigate("/communities")}
+          onClick={() => navigate("/scenes")}
           style={{
             marginTop: "20px",
             padding: "10px 20px",
@@ -542,7 +542,7 @@ function DiscussionThread() {
             cursor: "pointer",
           }}
         >
-          Back to Communities
+          Back to Scenes
         </button>
       </div>
     );
@@ -559,7 +559,7 @@ function DiscussionThread() {
       }}
     >
       <button
-        onClick={() => navigate(`/community/${communityId}`)}
+        onClick={() => navigate(`/scene/${sceneId}`)}
         className="back-button"
         style={{
           background: "transparent",
@@ -571,12 +571,12 @@ function DiscussionThread() {
           marginBottom: "20px",
         }}
       >
-        ← Back to {community.name}
+        ← Back to {scene.name}
       </button>
 
       <div className="thread-header" style={{ marginBottom: "20px" }}>
         <h1 style={{ fontSize: "2rem", marginBottom: "10px" }}>
-          {discussion.title}
+          {thread.title}
         </h1>
         <div
           className="thread-meta"
@@ -599,16 +599,16 @@ function DiscussionThread() {
               justifyContent: "center",
             }}
           >
-            {discussion.author.charAt(0)}
+            {thread.author.charAt(0)}
           </span>
           <span
             className="author-name"
             style={{ fontWeight: "bold", color: "#ccc" }}
           >
-            {discussion.author}
+            {thread.author}
           </span>
           <span className="separator">•</span>
-          <span className="time">{formatTimeAgo(discussion.createdAt)}</span>
+          <span className="time">{formatTimeAgo(thread.createdAt)}</span>
         </div>
       </div>
 
@@ -638,13 +638,13 @@ function DiscussionThread() {
           }}
         >
           <button
-            onClick={() => handleUpvote(discussion.id, false)}
+            onClick={() => handleUpvote(thread.id, false)}
             style={{
               background: "transparent",
               border: "none",
               cursor: "pointer",
               fontSize: "1rem",
-              color: userVotes[discussion.id] === "upvote" ? "#1db954" : "#666",
+              color: userVotes[thread.id] === "upvote" ? "#1db954" : "#666",
               padding: "0",
               lineHeight: "1",
             }}
@@ -657,26 +657,26 @@ function DiscussionThread() {
               fontWeight: "bold",
               fontSize: "0.9rem",
               color:
-                (discussion.upvotes || 0) > 0
+                (thread.upvotes || 0) > 0
                   ? "#1db954"
-                  : (discussion.upvotes || 0) < 0
+                  : (thread.upvotes || 0) < 0
                     ? "#e74c3c"
                     : "#888",
               minWidth: "25px",
               textAlign: "center",
             }}
           >
-            {discussion.upvotes || 0}
+            {thread.upvotes || 0}
           </span>
           <button
-            onClick={() => handleDownvote(discussion.id, false)}
+            onClick={() => handleDownvote(thread.id, false)}
             style={{
               background: "transparent",
               border: "none",
               cursor: "pointer",
               fontSize: "1rem",
               color:
-                userVotes[discussion.id] === "downvote" ? "#e74c3c" : "#666",
+                userVotes[thread.id] === "downvote" ? "#e74c3c" : "#666",
               padding: "0",
               lineHeight: "1",
             }}
@@ -694,7 +694,7 @@ function DiscussionThread() {
             paddingRight: "80px",
           }}
         >
-          {discussion.content}
+          {thread.content}
         </p>
       </div>
 
@@ -1035,4 +1035,4 @@ function DiscussionThread() {
   );
 }
 
-export default DiscussionThread;
+export default ThreadDetail;

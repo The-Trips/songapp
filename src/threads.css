@@ -1,4 +1,4 @@
-/* discussions.css */
+/* threads.css */
 
 .back-button {
   margin-bottom: 20px;
@@ -18,18 +18,18 @@
   border-color: #646cff;
 }
 
-/* ===== DISCUSSION LIST ===== */
+/* ===== THREAD LIST ===== */
 
-.discussion-header {
+.thread-header {
   margin-bottom: 30px;
 }
 
-.discussion-header h1 {
+.thread-header h1 {
   font-size: 2em;
   margin-bottom: 5px;
 }
 
-.create-discussion-btn {
+.create-thread-btn {
   width: 100%;
   background: #065fd4;
   color: white;
@@ -43,7 +43,7 @@
   transition: background 0.25s;
 }
 
-.create-discussion-btn:hover {
+.create-thread-btn:hover {
   background: #0550bd;
 }
 
@@ -88,13 +88,13 @@
   background: #535bf2;
 }
 
-.discussions-container {
+.threads-container {
   display: flex;
   flex-direction: column;
   gap: 15px;
 }
 
-.discussion-card {
+.thread-card {
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 12px;
@@ -106,30 +106,30 @@
   align-items: center;
 }
 
-.discussion-card:hover {
+.thread-card:hover {
   border-color: #646cff;
   background: #222;
   transform: translateX(5px);
 }
 
-.discussion-main {
+.thread-main {
   flex: 1;
 }
 
-.discussion-title {
+.thread-title {
   font-size: 1.3em;
   margin-bottom: 8px;
   color: #fff;
 }
 
-.discussion-preview {
+.thread-preview {
   color: #ccc;
   margin-bottom: 12px;
   font-size: 0.95em;
   line-height: 1.4;
 }
 
-.discussion-meta {
+.thread-meta {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -137,14 +137,14 @@
   color: #999;
 }
 
-.discussion-meta .author {
+.thread-meta .author {
   display: flex;
   align-items: center;
   gap: 8px;
   color: #fff;
 }
 
-.discussion-meta .avatar {
+.thread-meta .avatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -156,21 +156,21 @@
   font-weight: bold;
 }
 
-.discussion-meta .separator {
+.thread-meta .separator {
   color: #555;
 }
 
-.discussion-arrow {
+.thread-arrow {
   font-size: 1.5em;
   color: #646cff;
   transition: transform 0.25s;
 }
 
-.discussion-card:hover .discussion-arrow {
+.thread-card:hover .thread-arrow {
   transform: translateX(5px);
 }
 
-/* ===== DISCUSSION THREAD ===== */
+/* ===== THREAD DETAIL/DETAIL ===== */
 
 .thread-header {
   margin-bottom: 30px;
@@ -489,18 +489,18 @@
   text-align: left;
 }
 
-/* ===== CREATE DISCUSSION ===== */
+/* ===== CREATE THREAD ===== */
 
-.create-discussion-header {
+.create-thread-header {
   margin-bottom: 30px;
 }
 
-.create-discussion-header h1 {
+.create-thread-header h1 {
   font-size: 2em;
   margin-bottom: 5px;
 }
 
-.create-discussion-form {
+.create-thread-form {
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 12px;
@@ -579,7 +579,7 @@
   color: #646cff;
 }
 
-.discussion-preview-card {
+.thread-preview-card {
   background: #1a1a1a;
   padding: 20px;
   border-radius: 10px;
@@ -647,7 +647,7 @@
   cursor: not-allowed;
 }
 
-.submit-discussion-btn {
+.submit-thread-btn {
   padding: 12px 30px;
   border-radius: 8px;
   background: #065fd4;
@@ -659,35 +659,35 @@
   transition: background 0.25s;
 }
 
-.submit-discussion-btn:hover:not(:disabled) {
+.submit-thread-btn:hover:not(:disabled) {
   background: #0550bd;
 }
 
-.submit-discussion-btn:disabled {
+.submit-thread-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.discussion-guidelines {
+.thread-guidelines {
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 12px;
   padding: 25px;
 }
 
-.discussion-guidelines h4 {
+.thread-guidelines h4 {
   color: #646cff;
   margin-bottom: 15px;
   font-size: 1.1em;
 }
 
-.discussion-guidelines ul {
+.thread-guidelines ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.discussion-guidelines li {
+.thread-guidelines li {
   color: #ccc;
   padding: 8px 0;
   padding-left: 25px;
@@ -695,7 +695,7 @@
   line-height: 1.5;
 }
 
-.discussion-guidelines li:before {
+.thread-guidelines li:before {
   content: "•";
   color: #646cff;
   font-weight: bold;
@@ -706,12 +706,12 @@
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 768px) {
-  .discussion-card {
+  .thread-card {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .discussion-arrow {
+  .thread-arrow {
     align-self: flex-end;
     margin-top: 10px;
   }
@@ -730,7 +730,7 @@
   }
 
   .cancel-action-btn,
-  .submit-discussion-btn {
+  .submit-thread-btn {
     width: 100%;
   }
 

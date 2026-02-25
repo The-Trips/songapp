@@ -188,7 +188,7 @@ function Homepage() {
             
             {/* UPDATED LINK */}
             <div 
-                onClick={() => navigate('/communities')} // <--- Added onClick
+                onClick={() => navigate('/scenes')} // <--- Added onClick
                 style={{ textAlign: 'center', color: '#065fd4', fontSize: '0.9rem', cursor: 'pointer', marginTop: '10px' }}
             >
                Find Friends

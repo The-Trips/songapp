@@ -1,17 +1,17 @@
 // src/CommunitiesList.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./discussions.css";
+import "./threads.css";
 
 const API_URL = "http://localhost:8000";
 
-function CommunitiesList() {
+function ScenesList() {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("User");
-  const [communities, setCommunities] = useState([]);
+  const [scenes, setScenes] = useState([]);
   const [filter, setFilter] = useState("all"); // 'all' | 'official' | 'joined'
-  const [joinedCommunities, setJoinedCommunities] = useState([]);
+  const [joinedScenes, setJoinedScenes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -20,16 +20,16 @@ function CommunitiesList() {
 
     // load joined list (kept localStorage-based)
     const savedJoined = localStorage.getItem(
-      `joined_communities_${storedUser || "User"}`,
+      `joined_scenes_${storedUser || "User"}`,
     );
-    if (savedJoined) setJoinedCommunities(JSON.parse(savedJoined));
+    if (savedJoined) setJoinedScenes(JSON.parse(savedJoined));
 
-    fetchCommunities();
+    fetchScenes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const normalizeCommunity = (item) => {
-    // Supports both "scene" + "community" payloads with different field names
+  const normalizeScene = (item) => {
+    // Supports both "scene" + old "community" payloads with different field names
     const id = item.id ?? item._id;
 
     return {
@@ -47,100 +47,96 @@ function CommunitiesList() {
         item.followersCount ??
         0,
 
-      // discussions/threads count (fallback 0)
-      discussions: item.numDiscussions,
+      // threads count (fallback 0)
+      threads: item.numThreads,
 
       createdAt: item.createdAt,
       createdBy: item.owner,
     };
   };
 
-  const fetchCommunities = async () => {
+  const fetchScenes = async () => {
     setIsLoading(true);
 
     try {
-      // Fallback to communities endpoint
-      let res = await fetch(`${API_URL}/api/communities`);
+      // Fallback to scenes endpoint
+      let res = await fetch(`${API_URL}/api/scenes`);
       if (!res.ok)
-        throw new Error(`Failed to fetch communities. Status: ${res.status}`);
+        throw new Error(`Failed to fetch scenes. Status: ${res.status}`);
 
       const data = await res.json();
-      const list = Array.isArray(data) ? data : (data?.communities ?? []);
-      setCommunities(Array.isArray(list) ? list.map(normalizeCommunity) : []);
+      const list = Array.isArray(data) ? data : (data?.scenes ?? []);
+      setScenes(Array.isArray(list) ? list.map(normalizeScene) : []);
     } catch (err) {
-      console.error("Error fetching communities:", err);
-      setCommunities([]);
+      console.error("Error fetching scenes:", err);
+      setScenes([]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateCommunity = () => {
+  const handleCreateScene = () => {
     const isAuthenticated = localStorage.getItem("isAuthenticated");
 
     if (isAuthenticated !== "true") {
-      alert("Please log in to create a community");
+      alert("Please log in to create a scene");
       navigate("/login");
       return;
     }
 
-    // Supports both routes in your two versions:
-    // first code: /community/create
-    // second code: /create-community
-    // Keep one as primary; fallback is easy to change.
-    navigate("/create-community");
+    navigate("/create-scene");
   };
 
-  const handleCommunityClick = (communityId) => {
-    navigate(`/community/${communityId}`);
+  const handleSceneClick = (sceneId) => {
+    navigate(`/scene/${sceneId}`);
   };
 
-  const handleJoinCommunity = (e, communityId) => {
+  const handleJoinScene = (e, sceneId) => {
     e.stopPropagation();
 
     const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (isAuthenticated !== "true") {
-      alert("Please log in to join communities");
+      alert("Please log in to join scenes");
       navigate("/login");
       return;
     }
 
-    const isJoined = joinedCommunities.includes(communityId);
-    let updatedJoined = joinedCommunities;
+    const isJoined = joinedScenes.includes(sceneId);
+    let updatedJoined = joinedScenes;
 
     if (isJoined) {
-      updatedJoined = joinedCommunities.filter((id) => id !== communityId);
-      setCommunities((prev) =>
-        prev.map((c) =>
-          c.id === communityId
-            ? { ...c, members: Math.max(0, (c.members || 0) - 1) }
-            : c,
+      updatedJoined = joinedScenes.filter((id) => id !== sceneId);
+      setScenes((prev) =>
+        prev.map((s) =>
+          s.id === sceneId
+            ? { ...s, members: Math.max(0, (s.members || 0) - 1) }
+            : s,
         ),
       );
     } else {
-      updatedJoined = [...joinedCommunities, communityId];
-      setCommunities((prev) =>
-        prev.map((c) =>
-          c.id === communityId ? { ...c, members: (c.members || 0) + 1 } : c,
+      updatedJoined = [...joinedScenes, sceneId];
+      setScenes((prev) =>
+        prev.map((s) =>
+          s.id === sceneId ? { ...s, members: (s.members || 0) + 1 } : s,
         ),
       );
     }
 
-    setJoinedCommunities(updatedJoined);
+    setJoinedScenes(updatedJoined);
     localStorage.setItem(
-      `joined_communities_${username}`,
+      `joined_scenes_${username}`,
       JSON.stringify(updatedJoined),
     );
 
     // TODO later: persist join/leave to backend
   };
 
-  const filteredCommunities = useMemo(() => {
-    if (filter === "official") return communities.filter((c) => c.isOfficial);
+  const filteredScenes = useMemo(() => {
+    if (filter === "official") return scenes.filter((s) => s.isOfficial);
     if (filter === "joined")
-      return communities.filter((c) => joinedCommunities.includes(c.id));
-    return communities;
-  }, [communities, filter, joinedCommunities]);
+      return scenes.filter((s) => joinedScenes.includes(s.id));
+    return scenes;
+  }, [scenes, filter, joinedScenes]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown";
@@ -169,7 +165,7 @@ function CommunitiesList() {
           margin: "0 auto",
         }}
       >
-        <p>Loading communities...</p>
+        <p>Loading scenes...</p>
       </div>
     );
   }
@@ -186,10 +182,10 @@ function CommunitiesList() {
       }}
     >
       {/* Header */}
-      <div className="communities-header" style={{ marginBottom: "30px" }}>
-        <h1>Communities</h1>
+      <div className="scenes-header" style={{ marginBottom: "30px" }}>
+        <h1>Scenes</h1>
         <p style={{ color: "#ccc", marginTop: "10px" }}>
-          Join communities to connect with fans and discuss your favorite music
+          Join scenes to connect with fans and discuss your favorite music
         </p>
       </div>
 
@@ -215,7 +211,7 @@ function CommunitiesList() {
               fontWeight: filter === "all" ? "bold" : "normal",
             }}
           >
-            All Communities ({communities.length})
+            All Scenes ({scenes.length})
           </button>
 
           <button
@@ -231,7 +227,7 @@ function CommunitiesList() {
               fontWeight: filter === "official" ? "bold" : "normal",
             }}
           >
-            Official ({communities.filter((c) => c.isOfficial).length})
+            Official ({scenes.filter((s) => s.isOfficial).length})
           </button>
 
           <button
@@ -247,12 +243,12 @@ function CommunitiesList() {
               fontWeight: filter === "joined" ? "bold" : "normal",
             }}
           >
-            Joined ({joinedCommunities.length})
+            Joined ({joinedScenes.length})
           </button>
         </div>
 
         <button
-          onClick={handleCreateCommunity}
+          onClick={handleCreateScene}
           style={{
             padding: "10px 20px",
             borderRadius: "25px",
@@ -264,21 +260,21 @@ function CommunitiesList() {
             fontSize: "0.95rem",
           }}
         >
-          + Create Community
+          + Create Scene
         </button>
       </div>
 
-      {/* Communities Grid */}
-      {filteredCommunities.length === 0 ? (
+      {/* Scenes Grid */}
+      {filteredScenes.length === 0 ? (
         <div
           style={{ textAlign: "center", padding: "60px 20px", color: "#666" }}
         >
           <div style={{ fontSize: "3rem", marginBottom: "20px" }}>🎵</div>
-          <h2>No communities found</h2>
+          <h2>No scenes found</h2>
           <p style={{ marginTop: "10px" }}>
             {filter === "joined"
-              ? "You haven't joined any communities yet. Explore and join some!"
-              : "No communities available at the moment."}
+              ? "You haven't joined any scenes yet. Explore and join some!"
+              : "No scenes available at the moment."}
           </p>
         </div>
       ) : (
@@ -291,13 +287,13 @@ function CommunitiesList() {
             maxWidth: "100%",
           }}
         >
-          {filteredCommunities.map((community) => {
-            const isJoined = joinedCommunities.includes(community.id);
+          {filteredScenes.map((scene) => {
+            const isJoined = joinedScenes.includes(scene.id);
 
             return (
               <div
-                key={community.id}
-                onClick={() => handleCommunityClick(community.id)}
+                key={scene.id}
+                onClick={() => handleSceneClick(scene.id)}
                 style={{
                   background: "#1a1a1a",
                   border: "1px solid #333",
@@ -317,7 +313,7 @@ function CommunitiesList() {
                 }}
               >
                 {/* Official Badge */}
-                {community.isOfficial && (
+                {scene.isOfficial && (
                   <div
                     style={{
                       position: "absolute",
@@ -335,20 +331,20 @@ function CommunitiesList() {
                   </div>
                 )}
 
-                {/* Community Image */}
+                {/* Scene Image */}
                 <div
                   style={{
                     width: "100%",
                     height: "150px",
-                    background: community.imageUrl
-                      ? `url(${community.imageUrl}) center/cover`
+                    background: scene.imageUrl
+                      ? `url(${scene.imageUrl}) center/cover`
                       : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                     borderRadius: "8px",
                     marginBottom: "15px",
                   }}
                 />
 
-                {/* Community Info */}
+                {/* Scene Info */}
                 <h3
                   style={{
                     fontSize: "1.2rem",
@@ -358,7 +354,7 @@ function CommunitiesList() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {community.name}
+                  {scene.name}
                 </h3>
 
                 <p
@@ -374,7 +370,7 @@ function CommunitiesList() {
                     WebkitBoxOrient: "vertical",
                   }}
                 >
-                  {community.description}
+                  {scene.description}
                 </p>
 
                 {/* Stats */}
@@ -388,11 +384,11 @@ function CommunitiesList() {
                   }}
                 >
                   <span>
-                    👥 {(community.members ?? 0).toLocaleString()} members
+                    👥 {(scene.members ?? 0).toLocaleString()} members
                   </span>
                   <span>
-                    💬 {(community.discussions ?? 0).toLocaleString()}{" "}
-                    discussions
+                    💬 {(scene.threads ?? 0).toLocaleString()}{" "}
+                    threads
                   </span>
                 </div>
 
@@ -407,12 +403,12 @@ function CommunitiesList() {
                   }}
                 >
                   <span style={{ fontSize: "0.7rem", color: "#666" }}>
-                    Created {formatDate(community.createdAt)}
-                    {community.createdBy ? ` by ${community.createdBy}` : ""}
+                    Created {formatDate(scene.createdAt)}
+                    {scene.createdBy ? ` by ${scene.createdBy}` : ""}
                   </span>
 
                   <button
-                    onClick={(e) => handleJoinCommunity(e, community.id)}
+                    onClick={(e) => handleJoinScene(e, scene.id)}
                     style={{
                       padding: "6px 16px",
                       borderRadius: "20px",
@@ -436,4 +432,4 @@ function CommunitiesList() {
   );
 }
 
-export default CommunitiesList;
+export default ScenesList;

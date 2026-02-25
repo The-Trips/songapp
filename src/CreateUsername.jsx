@@ -1,12 +1,20 @@
 // src/CreateUsername.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { 
+  AtSign, 
+  CheckCircle, 
+  AlertCircle,
+  ShieldCheck
+} from 'lucide-react';
+import './Registration.css';
 
 function CreateUsername() {
   const navigate = useNavigate();
   const location = useLocation();
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // If someone tries to access this page directly without registering, send them back
   useEffect(() => {
@@ -18,6 +26,7 @@ function CreateUsername() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
     const email = location.state?.email;
 
@@ -36,47 +45,88 @@ function CreateUsername() {
         throw new Error(data.detail || 'Failed to create username');
       }
 
-      // Success! Redirect to login
-      alert("Account created successfully!");
-      navigate('/login');
+      // Success!
+      navigate('/login', { state: { accountCreated: true } });
       
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={{ marginBottom: '10px', color: '#fff' }}>One Last Step</h2>
-        <p style={{ color: '#aaa', marginBottom: '20px' }}>Pick a unique username for your profile.</p>
+    <div className="reg-page-wrapper">
+      <div className="reg-card">
+        <header className="reg-header">
+          <div className="reg-logo">SongApp</div>
+          <p className="reg-subtitle">Almost there! Finalize your profile</p>
+        </header>
+
+        <div className="reg-step-indicator">
+          <div className="step-dot active"></div>
+          <div className="step-dot active"></div>
+        </div>
+
+        {error && (
+          <div className="reg-error-box">
+            <AlertCircle size={18} />
+            <span>{error}</span>
+          </div>
+        )}
         
-        {error && <div style={styles.error}>{error}</div>}
-        
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <input 
-            type="text" 
-            placeholder="Username" 
-            value={username} 
-            onChange={(e) => setUsername(e.target.value)} 
-            style={styles.input} 
-            required 
-          />
-          <button type="submit" style={styles.button}>Complete Setup</button>
+        <form onSubmit={handleSubmit} className="reg-form">
+          <div style={{ textAlign: 'left', marginBottom: '10px' }}>
+            <h3 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>One Last Step</h3>
+            <p style={{ margin: 0, color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem' }}>
+              Pick a unique username for your profile.
+            </p>
+          </div>
+
+          <div className="reg-input-group">
+            <input 
+              type="text" 
+              placeholder="Username" 
+              className="reg-input"
+              value={username} 
+              onChange={(e) => setUsername(e.target.value)} 
+              required 
+            />
+            <AtSign className="reg-input-icon" size={20} />
+          </div>
+
+          <button 
+            type="submit" 
+            className="reg-next-btn"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Setting up...' : (
+              <>
+                Complete Setup <CheckCircle size={20} />
+              </>
+            )}
+          </button>
+
+          <div 
+            style={{ 
+              marginTop: '20px', 
+              padding: '12px', 
+              background: 'rgba(255,255,255,0.03)', 
+              borderRadius: '10px',
+              fontSize: '0.75rem',
+              color: 'rgba(255,255,255,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}
+          >
+            <ShieldCheck size={16} />
+            Your email is verified. This username will be your public identity.
+          </div>
         </form>
       </div>
     </div>
   );
 }
-
-// Reusing styles for consistency
-const styles = {
-  container: { height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#000', color: 'white' },
-  card: { width: '100%', maxWidth: '400px', padding: '40px', backgroundColor: '#1a1a1a', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.5)', textAlign: 'center' },
-  form: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  input: { padding: '12px', borderRadius: '5px', border: '1px solid #333', backgroundColor: '#222', color: 'white', fontSize: '1rem' },
-  button: { padding: '12px', borderRadius: '5px', border: 'none', backgroundColor: '#770505', color: 'white', fontSize: '1rem', cursor: 'pointer', fontWeight: 'bold' },
-  error: { color: '#ff4444', marginBottom: '15px', fontSize: '0.9rem' }
-};
 
 export default CreateUsername;

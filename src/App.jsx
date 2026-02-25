@@ -13,11 +13,11 @@ import CreateUsername from "./CreateUsername";
 import Homepage from "./homepage";
 import AlbumPage from "./AlbumPage";
 import ProfilePage from "./ProfilePage";
-import CommunitiesList from "./CommunitiesList";
-import CommunityDetail from "./CommunityDetail";
-import CreateCommunity from "./CreateCommunity";
-import CreateDiscussion from "./CreateDiscussion";
-import DiscussionThread from "./DiscussionThread";
+import ScenesList from "./ScenesList";
+import SceneDetail from "./SceneDetail";
+import CreateScene from "./CreateScene";
+import CreateThread from "./CreateThread";
+import ThreadDetail from "./ThreadDetail";
 import "./App.css";
 
 function App() {
@@ -87,23 +87,23 @@ function App() {
             element={<AlbumPage isAuthenticated={isAuthenticated} />}
           />
 
-          {/* --- DISCUSSION ROUTES --- */}
-          <Route path="/communities" element={<CommunitiesList />} />
-          <Route path="/community/:id" element={<CommunityDetail />} />
+          {/* --- SCENE & THREAD ROUTES --- */}
+          <Route path="/scenes" element={<ScenesList />} />
+          <Route path="/scene/:id" element={<SceneDetail />} />
           <Route
-            path="/create-community"
+            path="/create-scene"
             element={
-              isAuthenticated ? <CreateCommunity /> : <Navigate to="/login" />
+              isAuthenticated ? <CreateScene /> : <Navigate to="/login" />
             }
           />
           <Route
-            path="/community/:communityId/discussion/:discussionId"
-            element={<DiscussionThread />}
+            path="/scene/:sceneId/thread/:threadId"
+            element={<ThreadDetail />}
           />
           <Route
-            path="/community/:id/create-discussion"
+            path="/scene/:id/create-thread"
             element={
-              isAuthenticated ? <CreateDiscussion /> : <Navigate to="/login" />
+              isAuthenticated ? <CreateThread /> : <Navigate to="/login" />
             }
           />
         </Route>

@@ -1,21 +1,21 @@
-// src/CommunityDetail.jsx
+// src/SceneDetail.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import "./discussions.css";
+import "./threads.css";
 
 const API_URL = "http://localhost:8000";
 
-function CommunityDetail() {
+function SceneDetail() {
   const navigate = useNavigate();
   const params = useParams();
 
-  // supports both: { communityId } and { id }
-  const communityIdRaw = params.communityId ?? params.id;
-  const communityIdNum = Number(communityIdRaw);
+  // supports both: { sceneId } and { id }
+  const sceneIdRaw = params.sceneId ?? params.id;
+  const sceneIdNum = Number(sceneIdRaw);
 
   const [username, setUsername] = useState("User");
-  const [community, setCommunity] = useState(null);
-  const [discussions, setDiscussions] = useState([]);
+  const [scene, setScene] = useState(null);
+  const [threads, setThreads] = useState([]);
   const [isJoined, setIsJoined] = useState(false);
   const [sortBy, setSortBy] = useState("recent"); // 'recent' | 'popular' | 'oldest'
   const [isLoading, setIsLoading] = useState(true);
@@ -26,19 +26,19 @@ function CommunityDetail() {
 
     // joined check (localStorage)
     const savedJoined = localStorage.getItem(
-      `joined_communities_${storedUser || "User"}`,
+      `joined_scenes_${storedUser || "User"}`,
     );
     if (savedJoined) {
       const joinedList = JSON.parse(savedJoined);
-      setIsJoined(joinedList.includes(communityIdNum));
+      setIsJoined(joinedList.includes(sceneIdNum));
     } else {
       setIsJoined(false);
     }
 
-    fetchCommunityData();
-  }, [communityIdRaw]);
+    fetchSceneData();
+  }, [sceneIdRaw]);
 
-  const normalizeCommunity = (data) => {
+  const normalizeScene = (data) => {
     return {
       id: data.scene_id,
       name: data.name,
@@ -59,12 +59,9 @@ function CommunityDetail() {
   };
 
   const normalizeThread = (t) => {
-    // Handles both:
-    //  - scenes threads: { id, title, author, content, upvotes, commentCount, createdAt }
-    //  - communities threads: { id, title, text, author, likes, date }
     return {
       id: t.id ?? t.t_id ?? t._id,
-      communityId: communityIdNum,
+      sceneId: sceneIdNum,
       title: t.title ?? "(No title)",
       author: t.author ?? t.username ?? "Unknown",
       content: t.content ?? t.text ?? "",
@@ -75,59 +72,29 @@ function CommunityDetail() {
     };
   };
 
-  const fetchCommunityData = async () => {
+  const fetchSceneData = async () => {
     setIsLoading(true);
 
     try {
-      // 1) Try scenes endpoints
-      let communityRes = await fetch(`${API_URL}/api/scenes/${communityIdRaw}`);
-      if (communityRes.ok) {
-        const communityData = await communityRes.json();
-        setCommunity(normalizeCommunity(communityData));
-
-        // threads for scene
-        const threadsRes = await fetch(
-          `${API_URL}/api/scenes/${communityIdRaw}/threads`,
-        );
-        if (threadsRes.ok) {
-          const threadsData = await threadsRes.json();
-          const threadsArr = Array.isArray(threadsData)
-            ? threadsData
-            : (threadsData?.threads ?? []);
-          setDiscussions(
-            Array.isArray(threadsArr) ? threadsArr.map(normalizeThread) : [],
-          );
-        } else {
-          setDiscussions([]);
-        }
-
+      let sceneRes = await fetch(`${API_URL}/api/scenes/${sceneIdRaw}`);
+      if (!sceneRes.ok) {
+        setScene(null);
+        setThreads([]);
         setIsLoading(false);
         return;
       }
 
-      // 2) Fallback: communities endpoint
-      communityRes = await fetch(
-        `${API_URL}/api/communities/${communityIdRaw}`,
-      );
-      if (!communityRes.ok) {
-        setCommunity(null);
-        setDiscussions([]);
-        setIsLoading(false);
-        return;
-      }
+      const data = await sceneRes.json();
+      setScene(normalizeScene(data));
 
-      const data = await communityRes.json();
-      setCommunity(normalizeCommunity(data));
-
-      // Sometimes threads are included on the community payload
-      const threadsArr = data?.threads ?? data?.discussions ?? [];
-      setDiscussions(
+      const threadsArr = data?.threads ?? [];
+      setThreads(
         Array.isArray(threadsArr) ? threadsArr.map(normalizeThread) : [],
       );
     } catch (err) {
-      console.error("Error fetching community data:", err);
-      setCommunity(null);
-      setDiscussions([]);
+      console.error("Error fetching scene data:", err);
+      setScene(null);
+      setThreads([]);
     } finally {
       setIsLoading(false);
     }
@@ -143,25 +110,25 @@ function CommunityDetail() {
 
     const storedUser = localStorage.getItem("app_username") || "User";
     const savedJoined =
-      localStorage.getItem(`joined_communities_${storedUser}`) || "[]";
+      localStorage.getItem(`joined_scenes_${storedUser}`) || "[]";
     let joinedList = JSON.parse(savedJoined);
 
     if (isJoined) {
-      joinedList = joinedList.filter((id) => id !== communityIdNum);
-      setCommunity((prev) =>
+      joinedList = joinedList.filter((id) => id !== sceneIdNum);
+      setScene((prev) =>
         prev
           ? { ...prev, members: Math.max(0, (prev.members || 0) - 1) }
           : prev,
       );
     } else {
-      joinedList = Array.from(new Set([...joinedList, communityIdNum]));
-      setCommunity((prev) =>
+      joinedList = Array.from(new Set([...joinedList, sceneIdNum]));
+      setScene((prev) =>
         prev ? { ...prev, members: (prev.members || 0) + 1 } : prev,
       );
     }
 
     localStorage.setItem(
-      `joined_communities_${storedUser}`,
+      `joined_scenes_${storedUser}`,
       JSON.stringify(joinedList),
     );
     setIsJoined((v) => !v);
@@ -169,32 +136,32 @@ function CommunityDetail() {
     // TODO: later persist join/leave to backend
   };
 
-  const handleCreateDiscussion = () => {
+  const handleCreateThread = () => {
     const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (isAuthenticated !== "true") {
-      alert("Please log in to create a discussion");
+      alert("Please log in to start a thread");
       navigate("/login");
       return;
     }
-    navigate(`/community/${communityIdRaw}/create-discussion`);
+    navigate(`/scene/${sceneIdRaw}/create-thread`);
   };
 
-  const handleDiscussionClick = (discussionId) => {
-    navigate(`/community/${communityIdRaw}/discussion/${discussionId}`);
+  const handleThreadClick = (threadId) => {
+    navigate(`/scene/${sceneIdRaw}/thread/${threadId}`);
   };
 
   const handleGoToAlbum = () => {
-    if (community?.albumId) navigate(`/album/${community.albumId}`);
+    if (scene?.albumId) navigate(`/album/${scene.albumId}`);
   };
 
-  const sortedDiscussions = useMemo(() => {
-    const arr = [...discussions];
+  const sortedThreads = useMemo(() => {
+    const arr = [...threads];
     if (sortBy === "popular")
       return arr.sort((a, b) => (b.upvotes || 0) - (a.upvotes || 0));
     if (sortBy === "oldest")
       return arr.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     return arr.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }, [discussions, sortBy]);
+  }, [threads, sortBy]);
 
   const formatTimeAgo = (dateString) => {
     if (!dateString) return "Unknown";
@@ -237,12 +204,12 @@ function CommunityDetail() {
           margin: "0 auto",
         }}
       >
-        <p>Loading community...</p>
+        <p>Loading scene...</p>
       </div>
     );
   }
 
-  if (!community) {
+  if (!scene) {
     return (
       <div
         className="main-content"
@@ -253,9 +220,9 @@ function CommunityDetail() {
           margin: "0 auto",
         }}
       >
-        <h2>Community not found</h2>
+        <h2>Scene not found</h2>
         <button
-          onClick={() => navigate("/communities")}
+          onClick={() => navigate("/scenes")}
           style={{
             marginTop: "20px",
             padding: "10px 20px",
@@ -267,7 +234,7 @@ function CommunityDetail() {
             cursor: "pointer",
           }}
         >
-          Back to Communities
+          Back to Scenes
         </button>
       </div>
     );
@@ -297,10 +264,10 @@ function CommunityDetail() {
           marginBottom: "20px",
         }}
       >
-        ← Back to Communities
+        ← Back to Scenes
       </button>
 
-      {/* Community Header */}
+      {/* Scene Header */}
       <div
         style={{
           background: "linear-gradient(180deg, #1a1a1a 0%, #121212 100%)",
@@ -312,7 +279,7 @@ function CommunityDetail() {
         }}
       >
         {/* Official Badge */}
-        {community.isOfficial && (
+        {scene.isOfficial && (
           <div
             style={{
               position: "absolute",
@@ -331,21 +298,21 @@ function CommunityDetail() {
         )}
 
         <div style={{ display: "flex", gap: "30px", alignItems: "flex-start" }}>
-          {/* Community Image */}
+          {/* Scene Image */}
           <div
             style={{
               width: "150px",
               height: "150px",
               minWidth: "150px",
-              background: community.imageUrl
-                ? `url(${community.imageUrl}) center/cover`
+              background: scene.imageUrl
+                ? `url(${scene.imageUrl}) center/cover`
                 : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               borderRadius: "12px",
               boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
             }}
           />
 
-          {/* Community Info */}
+          {/* Scene Info */}
           <div style={{ flex: 1, textAlign: "left" }}>
             <h1
               style={{
@@ -354,7 +321,7 @@ function CommunityDetail() {
                 textAlign: "left",
               }}
             >
-              {community.name}
+              {scene.name}
             </h1>
             <p
               style={{
@@ -365,7 +332,7 @@ function CommunityDetail() {
                 textAlign: "left",
               }}
             >
-              {community.description}
+              {scene.description}
             </p>
 
             {/* Stats */}
@@ -380,14 +347,14 @@ function CommunityDetail() {
               }}
             >
               <span>
-                👥 {(community.members ?? 0).toLocaleString()} members
+                👥 {(scene.members ?? 0).toLocaleString()} members
               </span>
-              <span>{discussions.length} discussions</span>
+              <span>{threads.length} threads</span>
 
               {/* NEW */}
-              <span>Created {formatTimeAgo(community.createdAt)}</span>
+              <span>Created {formatTimeAgo(scene.createdAt)}</span>
 
-              <span>Created by {community.createdBy || "Unknown"}</span>
+              <span>Created by {scene.createdBy || "Unknown"}</span>
             </div>
 
             {/* Action Buttons */}
@@ -405,10 +372,10 @@ function CommunityDetail() {
                   fontSize: "0.95rem",
                 }}
               >
-                {isJoined ? "✓ Joined" : "+ Join Community"}
+                {isJoined ? "✓ Joined" : "+ Join Scene"}
               </button>
 
-              {community.isOfficial && community.albumId && (
+              {scene.isOfficial && scene.albumId && (
                 <button
                   onClick={handleGoToAlbum}
                   style={{
@@ -430,7 +397,7 @@ function CommunityDetail() {
         </div>
       </div>
 
-      {/* Discussions Section */}
+      {/* Threads Section */}
       <div
         style={{
           marginBottom: "20px",
@@ -439,9 +406,9 @@ function CommunityDetail() {
           alignItems: "center",
         }}
       >
-        <h2>Discussions</h2>
+        <h2>Threads</h2>
         <button
-          onClick={handleCreateDiscussion}
+          onClick={handleCreateThread}
           style={{
             padding: "10px 20px",
             borderRadius: "25px",
@@ -453,7 +420,7 @@ function CommunityDetail() {
             fontSize: "0.95rem",
           }}
         >
-          + New Discussion
+          + New Thread
         </button>
       </div>
 
@@ -487,8 +454,8 @@ function CommunityDetail() {
         ))}
       </div>
 
-      {/* Discussions List */}
-      {sortedDiscussions.length === 0 ? (
+      {/* Threads List */}
+      {sortedThreads.length === 0 ? (
         <div
           style={{
             textAlign: "center",
@@ -499,12 +466,12 @@ function CommunityDetail() {
           }}
         >
           <div style={{ fontSize: "3rem", marginBottom: "20px" }}>💬</div>
-          <h3>No discussions yet</h3>
+          <h3>No threads yet</h3>
           <p style={{ color: "#888", marginTop: "10px", marginBottom: "20px" }}>
-            Be the first to start a conversation in this community!
+            Be the first to start a conversation in this scene!
           </p>
           <button
-            onClick={handleCreateDiscussion}
+            onClick={handleCreateThread}
             style={{
               padding: "10px 20px",
               borderRadius: "25px",
@@ -515,15 +482,15 @@ function CommunityDetail() {
               cursor: "pointer",
             }}
           >
-            Start Discussion
+            Start Thread
           </button>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-          {sortedDiscussions.map((discussion) => (
+          {sortedThreads.map((thread) => (
             <div
-              key={discussion.id}
-              onClick={() => handleDiscussionClick(discussion.id)}
+              key={thread.id}
+              onClick={() => handleThreadClick(thread.id)}
               style={{
                 background: "#1a1a1a",
                 border: "1px solid #333",
@@ -550,7 +517,7 @@ function CommunityDetail() {
                 }}
               >
                 <h3 style={{ fontSize: "1.2rem", marginBottom: "8px" }}>
-                  {discussion.title}
+                  {thread.title}
                 </h3>
                 <div
                   style={{
@@ -561,8 +528,8 @@ function CommunityDetail() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  <span>⬆ {discussion.upvotes || 0}</span>
-                  <span>💬 {discussion.commentCount || 0}</span>
+                  <span>⬆ {thread.upvotes || 0}</span>
+                  <span>💬 {thread.commentCount || 0}</span>
                 </div>
               </div>
 
@@ -577,7 +544,7 @@ function CommunityDetail() {
                   textAlign: "left",
                 }}
               >
-                {discussion.content}
+                {thread.content}
               </p>
 
               <div
@@ -601,11 +568,11 @@ function CommunityDetail() {
                     fontSize: "0.9rem",
                   }}
                 >
-                  {discussion.author?.charAt(0) || "U"}
+                  {thread.author?.charAt(0) || "U"}
                 </span>
-                <span>{discussion.author || "Unknown"}</span>
+                <span>{thread.author || "Unknown"}</span>
                 <span>•</span>
-                <span>{formatTimeAgo(discussion.createdAt)}</span>
+                <span>{formatTimeAgo(thread.createdAt)}</span>
               </div>
             </div>
           ))}
@@ -615,4 +582,4 @@ function CommunityDetail() {
   );
 }
 
-export default CommunityDetail;
+export default SceneDetail;
