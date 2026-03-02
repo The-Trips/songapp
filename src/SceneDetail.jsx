@@ -1,6 +1,7 @@
 // src/SceneDetail.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Settings } from "lucide-react";
 import "./threads.css";
 
 const API_URL = "http://localhost:8000";
@@ -252,7 +253,7 @@ function SceneDetail() {
     >
       {/* Back Button */}
       <button
-        onClick={() => navigate("/communities")}
+        onClick={() => navigate("/scenes")}
         className="back-button"
         style={{
           background: "transparent",
@@ -374,6 +375,41 @@ function SceneDetail() {
               >
                 {isJoined ? "✓ Joined" : "+ Join Scene"}
               </button>
+
+              {/* Settings Cog Button (Owner Only) */}
+              {username === scene.createdBy && (
+                <button
+                  onClick={() => navigate(`/scene/${sceneIdRaw}/edit`)}
+                  title="Scene Settings"
+                  className="settings-button"
+                  style={{
+                    padding: "10px",
+                    borderRadius: "50%",
+                    border: "1px solid #444",
+                    background: "#1a1a1a",
+                    color: "#aaa",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.2s ease",
+                    width: "42px",
+                    height: "42px"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = "#1db954";
+                    e.currentTarget.style.borderColor = "#1db954";
+                    e.currentTarget.style.transform = "rotate(45deg)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = "#aaa";
+                    e.currentTarget.style.borderColor = "#444";
+                    e.currentTarget.style.transform = "rotate(0)";
+                  }}
+                >
+                  <Settings size={20} />
+                </button>
+              )}
 
               {scene.isOfficial && scene.albumId && (
                 <button

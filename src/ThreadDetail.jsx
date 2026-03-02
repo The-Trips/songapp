@@ -41,9 +41,10 @@ const normalizeRepliesTree = (items) => {
 
   return items.map((item) => ({
     id: item.id,
-    author: item.author ?? "Unknown",
-    content: item.content ?? item.text ?? "",
+    author: item.author,
+    content: item.content ?? item.text,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
     upvotes:
       typeof item.upvotes === "number"
         ? item.upvotes
@@ -84,212 +85,354 @@ const RenderReplies = ({
   username,
   maxDepth = 3,
   userVotes,
+  editingReply,
+  setEditingReply,
+  editReplyInput,
+  setEditReplyInput,
+  handleUpdateReply,
+  handleDeleteReply,
 }) => {
   if (!replies || replies.length === 0) return null;
 
   return (
     <div className="replies-container">
-      {replies.map((reply) => (
-        <div
-          key={reply.id}
-          className="reply-item"
-          style={{ position: "relative" }}
-        >
-          {/* Upvote/Downvote for replies */}
+      {replies.map((reply) => {
+        const isGhost = !reply.author || reply.author === "Unknown";
+        const isAuthor = reply.author === username;
+        const isEditing = editingReply === reply.id;
+
+        return (
           <div
-            style={{
-              position: "absolute",
-              top: "10px",
-              right: "10px",
-              display: "flex",
-              gap: "3px",
-              alignItems: "center",
-              background: "#0a0a0a",
-              padding: "4px 8px",
-              borderRadius: "20px",
-              border: "1px solid #333",
-            }}
+            key={reply.id}
+            className="reply-item"
+            style={{ position: "relative" }}
           >
-            <button
-              onClick={() => handleUpvote(reply.id, true)}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                color: userVotes[reply.id] === "upvote" ? "#1db954" : "#666",
-                padding: "0",
-                lineHeight: "1",
-              }}
-              title="Upvote"
-            >
-              ⬆
-            </button>
-            <span
-              style={{
-                fontWeight: "bold",
-                fontSize: "0.8rem",
-                color:
-                  (reply.upvotes || 0) > 0
-                    ? "#1db954"
-                    : (reply.upvotes || 0) < 0
-                      ? "#e74c3c"
-                      : "#888",
-                minWidth: "20px",
-                textAlign: "center",
-              }}
-            >
-              {reply.upvotes || 0}
-            </span>
-            <button
-              onClick={() => handleDownvote(reply.id, true)}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "0.9rem",
-                color: userVotes[reply.id] === "downvote" ? "#e74c3c" : "#666",
-                padding: "0",
-                lineHeight: "1",
-              }}
-              title="Downvote"
-            >
-              ⬇
-            </button>
-          </div>
-
-          <div className="reply-header">
-            <span className="reply-avatar">{reply.author.charAt(0)}</span>
-            <span className="reply-author">{reply.author}</span>
-            <span className="separator">•</span>
-            <span className="reply-time">{formatTimeAgo(reply.createdAt)}</span>
-          </div>
-
-          <div className="reply-content">
-            <p style={{ textAlign: "left" }}>{reply.content}</p>
-          </div>
-
-          <div style={{ marginTop: "10px" }}>
-            {depth < maxDepth && (
-              <button
-                className="reply-btn"
-                onClick={() =>
-                  setReplyingTo(replyingTo === reply.id ? null : reply.id)
-                }
+            {/* Upvote/Downvote for replies */}
+            {!isGhost && (
+              <div
                 style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#888",
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  padding: "0",
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  display: "flex",
+                  gap: "3px",
+                  alignItems: "center",
+                  background: "#0a0a0a",
+                  padding: "4px 8px",
+                  borderRadius: "20px",
+                  border: "1px solid #333",
                 }}
               >
-                💬 Reply
-              </button>
-            )}
-          </div>
-
-          {depth >= maxDepth && (
-            <span
-              style={{
-                color: "#666",
-                fontSize: "0.85rem",
-                display: "block",
-                marginTop: "8px",
-              }}
-            >
-              Maximum reply depth reached
-            </span>
-          )}
-
-          {replyingTo === reply.id && depth < maxDepth && (
-            <div
-              className="reply-input-container"
-              style={{ marginTop: "15px" }}
-            >
-              <div className="user-avatar small">{username.charAt(0)}</div>
-              <div className="input-wrapper" style={{ flex: 1 }}>
-                <textarea
-                  value={replyInputs[reply.id] || ""}
-                  onChange={(e) =>
-                    handleReplyInputChange(reply.id, e.target.value)
-                  }
-                  placeholder={`Reply to ${reply.author}...`}
-                  className="reply-textarea"
-                  rows={3}
+                <button
+                  onClick={() => handleUpvote(reply.id, true)}
                   style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    background: "#1a1a1a",
-                    border: "1px solid #444",
-                    color: "white",
-                    fontSize: "0.95rem",
-                    fontFamily: "inherit",
-                    boxSizing: "border-box",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    color: userVotes[reply.id] === "upvote" ? "#1db954" : "#666",
+                    padding: "0",
+                    lineHeight: "1",
                   }}
-                />
-                <div
-                  className="reply-actions"
-                  style={{ marginTop: "10px", display: "flex", gap: "10px" }}
+                  title="Upvote"
                 >
-                  <button
-                    onClick={() => handlePostReply(reply.id, depth)}
-                    disabled={!replyInputs[reply.id]?.trim()}
-                    className="post-reply-btn"
-                    style={{
-                      padding: "8px 16px",
-                      borderRadius: "20px",
-                      border: "none",
-                      background: replyInputs[reply.id]?.trim()
+                  ⬆
+                </button>
+                <span
+                  style={{
+                    fontWeight: "bold",
+                    fontSize: "0.8rem",
+                    color:
+                      (reply.upvotes || 0) > 0
                         ? "#1db954"
-                        : "#444",
-                      color: replyInputs[reply.id]?.trim() ? "black" : "#888",
-                      fontWeight: "bold",
-                      cursor: replyInputs[reply.id]?.trim()
-                        ? "pointer"
-                        : "not-allowed",
-                    }}
-                  >
-                    Post Reply
-                  </button>
-                  <button
-                    onClick={() => handleCancelReply(reply.id)}
-                    className="cancel-btn"
+                        : (reply.upvotes || 0) < 0
+                          ? "#e74c3c"
+                          : "#888",
+                    minWidth: "20px",
+                    textAlign: "center",
+                  }}
+                >
+                  {reply.upvotes || 0}
+                </span>
+                <button
+                  onClick={() => handleDownvote(reply.id, true)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    color: userVotes[reply.id] === "downvote" ? "#e74c3c" : "#666",
+                    padding: "0",
+                    lineHeight: "1",
+                  }}
+                  title="Downvote"
+                >
+                  ⬇
+                </button>
+              </div>
+            )}
+
+            <div className="reply-header">
+              <span className="reply-avatar">{isGhost ? "?" : reply.author.charAt(0)}</span>
+              <span className="reply-author" style={{ color: isGhost ? "#666" : "inherit", fontStyle: isGhost ? "italic" : "normal" }}>
+                {isGhost ? "[deleted]" : reply.author}
+              </span>
+              <span className="separator">•</span>
+              <span className="reply-time">{formatTimeAgo(reply.createdAt)}</span>
+              {reply.updatedAt && !isGhost && (
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#666",
+                    fontStyle: "italic",
+                    marginLeft: "5px",
+                  }}
+                  title={`Edited at ${new Date(reply.updatedAt).toLocaleString()}`}
+                >
+                  (edited)
+                </span>
+              )}
+            </div>
+
+            <div className="reply-content">
+              {isEditing ? (
+                <div style={{ marginTop: "10px" }}>
+                  <textarea
+                    value={editReplyInput}
+                    onChange={(e) => setEditReplyInput(e.target.value)}
                     style={{
-                      padding: "8px 16px",
-                      borderRadius: "20px",
-                      border: "1px solid #444",
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      background: "#1a1a1a",
+                      border: "1px solid #1db954",
+                      color: "white",
+                      fontSize: "0.95rem",
+                      fontFamily: "inherit",
+                      boxSizing: "border-box",
+                    }}
+                    rows={3}
+                  />
+                  <div style={{ marginTop: "8px", display: "flex", gap: "10px" }}>
+                    <button
+                      onClick={() => handleUpdateReply(reply.id)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: "15px",
+                        background: "#1db954",
+                        color: "black",
+                        fontWeight: "bold",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "0.8rem"
+                      }}
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingReply(null)}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: "15px",
+                        background: "transparent",
+                        border: "1px solid #444",
+                        color: "#ccc",
+                        cursor: "pointer",
+                        fontSize: "0.8rem"
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p style={{ textAlign: "left", color: isGhost ? "#666" : "inherit", fontStyle: isGhost ? "italic" : "normal" }}>
+                    {isGhost ? "[This message has been deleted]" : reply.content}
+                  </p>
+                  {reply.updatedAt && !isGhost && (
+                    <div
+                      style={{
+                        fontSize: "0.7rem",
+                        color: "#1db954",
+                        opacity: 0.6,
+                        marginTop: "6px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <span>✎</span>
+                      <span>This reply was edited</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {!isEditing && (
+              <div style={{ marginTop: "10px", display: "flex", gap: "12px", alignItems: "center" }}>
+                {depth < maxDepth && !isGhost && (
+                  <button
+                    className="reply-btn"
+                    onClick={() =>
+                      setReplyingTo(replyingTo === reply.id ? null : reply.id)
+                    }
+                    style={{
                       background: "transparent",
-                      color: "#ccc",
+                      border: "none",
+                      color: "#888",
                       cursor: "pointer",
+                      fontSize: "0.85rem",
+                      padding: "0",
                     }}
                   >
-                    Cancel
+                    💬 Reply
                   </button>
+                )}
+                {isAuthor && !isGhost && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setEditingReply(reply.id);
+                        setEditReplyInput(reply.content);
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#888",
+                        cursor: "pointer",
+                        fontSize: "0.85rem",
+                        padding: "0",
+                      }}
+                    >
+                      ✎ Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteReply(reply.id)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#e74c3c",
+                        cursor: "pointer",
+                        fontSize: "0.85rem",
+                        padding: "0",
+                      }}
+                    >
+                      🗑 Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {depth >= maxDepth && !isGhost && (
+              <span
+                style={{
+                  color: "#666",
+                  fontSize: "0.85rem",
+                  display: "block",
+                  marginTop: "8px",
+                }}
+              >
+                Maximum reply depth reached
+              </span>
+            )}
+
+            {replyingTo === reply.id && depth < maxDepth && !isGhost && (
+              <div
+                className="reply-input-container"
+                style={{ marginTop: "15px" }}
+              >
+                <div className="user-avatar small">{username.charAt(0)}</div>
+                <div className="input-wrapper" style={{ flex: 1 }}>
+                  <textarea
+                    value={replyInputs[reply.id] || ""}
+                    onChange={(e) =>
+                      handleReplyInputChange(reply.id, e.target.value)
+                    }
+                    placeholder={`Reply to ${reply.author}...`}
+                    className="reply-textarea"
+                    rows={3}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "8px",
+                      background: "#1a1a1a",
+                      border: "1px solid #444",
+                      color: "white",
+                      fontSize: "0.95rem",
+                      fontFamily: "inherit",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <div
+                    className="reply-actions"
+                    style={{ marginTop: "10px", display: "flex", gap: "10px" }}
+                  >
+                    <button
+                      onClick={() => handlePostReply(reply.id, depth)}
+                      disabled={!replyInputs[reply.id]?.trim()}
+                      className="post-reply-btn"
+                      style={{
+                        padding: "8px 16px",
+                        borderRadius: "20px",
+                        border: "none",
+                        background: replyInputs[reply.id]?.trim()
+                          ? "#1db954"
+                          : "#444",
+                        color: replyInputs[reply.id]?.trim() ? "black" : "#888",
+                        fontWeight: "bold",
+                        cursor: replyInputs[reply.id]?.trim()
+                          ? "pointer"
+                          : "not-allowed",
+                      }}
+                    >
+                      Post Reply
+                    </button>
+                    <button
+                      onClick={() => handleCancelReply(reply.id)}
+                      className="cancel-btn"
+                      style={{
+                        padding: "8px 16px",
+                        borderRadius: "20px",
+                        border: "1px solid #444",
+                        background: "transparent",
+                        color: "#ccc",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <RenderReplies
-            replies={reply.replies || []}
-            depth={depth + 1}
-            replyingTo={replyingTo}
-            setReplyingTo={setReplyingTo}
-            replyInputs={replyInputs}
-            handleReplyInputChange={handleReplyInputChange}
-            handlePostReply={handlePostReply}
-            handleCancelReply={handleCancelReply}
-            handleUpvote={handleUpvote}
-            handleDownvote={handleDownvote}
-            username={username}
-            maxDepth={maxDepth}
-            userVotes={userVotes}
-          />
-        </div>
-      ))}
+            <RenderReplies
+              replies={reply.replies || []}
+              depth={depth + 1}
+              replyingTo={replyingTo}
+              setReplyingTo={setReplyingTo}
+              replyInputs={replyInputs}
+              handleReplyInputChange={handleReplyInputChange}
+              handlePostReply={handlePostReply}
+              handleCancelReply={handleCancelReply}
+              handleUpvote={handleUpvote}
+              handleDownvote={handleDownvote}
+              username={username}
+              maxDepth={maxDepth}
+              userVotes={userVotes}
+              editingReply={editingReply}
+              setEditingReply={setEditingReply}
+              editReplyInput={editReplyInput}
+              setEditReplyInput={setEditReplyInput}
+              handleUpdateReply={handleUpdateReply}
+              handleDeleteReply={handleDeleteReply}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -307,6 +450,8 @@ function ThreadDetail() {
   const [replyInputs, setReplyInputs] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [userVotes, setUserVotes] = useState({});
+  const [editingReply, setEditingReply] = useState(null);
+  const [editReplyInput, setEditReplyInput] = useState("");
 
   useEffect(() => {
     const storedUser = localStorage.getItem("app_username");
@@ -451,6 +596,69 @@ function ThreadDetail() {
     } catch (err) {
       console.error(err);
       alert("Error posting reply");
+    }
+  };
+
+  const handleUpdateReply = async (replyId) => {
+    if (!editReplyInput.trim()) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/replies/${replyId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username,
+          text: editReplyInput,
+        }),
+      });
+
+      if (res.ok) {
+        const refreshRes = await fetch(
+          `http://localhost:8000/api/threads/${threadId}/replies`,
+        );
+        const data = await refreshRes.json();
+        setComments(normalizeRepliesTree(data.replies || []));
+        setEditingReply(null);
+        setEditReplyInput("");
+      } else {
+        const errData = await res.json();
+        alert(`Failed to update reply: ${errData.detail || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating reply");
+    }
+  };
+
+  const handleDeleteReply = async (replyId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this reply? It will be replaced with a ghost message.",
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/replies/${replyId}?username=${encodeURIComponent(username)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (res.ok) {
+        const refreshRes = await fetch(
+          `http://localhost:8000/api/threads/${threadId}/replies`,
+        );
+        const data = await refreshRes.json();
+        setComments(normalizeRepliesTree(data.replies || []));
+      } else {
+        const errData = await res.json();
+        alert(`Failed to delete reply: ${errData.detail || "Unknown error"}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting reply");
     }
   };
 
@@ -777,162 +985,110 @@ function ThreadDetail() {
               <p>No comments yet. Be the first to comment!</p>
             </div>
           ) : (
-            comments.map((comment) => (
-              <div
-                key={comment.id}
-                className="comment-item"
-                style={{
-                  background: "#1a1a1a",
-                  border: "1px solid #333",
-                  borderRadius: "12px",
-                  padding: "20px",
-                  marginBottom: "15px",
-                  position: "relative",
-                }}
-              >
-                {/* Upvote/Downvote for comments */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: "15px",
-                    right: "15px",
-                    display: "flex",
-                    gap: "4px",
-                    alignItems: "center",
-                    background: "#0a0a0a",
-                    padding: "5px 8px",
-                    borderRadius: "20px",
-                    border: "1px solid #333",
-                  }}
-                >
-                  <button
-                    onClick={() => handleUpvote(comment.id)}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "0.95rem",
-                      color:
-                        userVotes[comment.id] === "upvote" ? "#1db954" : "#666",
-                      padding: "0",
-                      lineHeight: "1",
-                    }}
-                    title="Upvote"
-                  >
-                    ⬆
-                  </button>
-                  <span
-                    style={{
-                      fontWeight: "bold",
-                      fontSize: "0.85rem",
-                      color:
-                        (comment.upvotes || 0) > 0
-                          ? "#1db954"
-                          : (comment.upvotes || 0) < 0
-                            ? "#e74c3c"
-                            : "#888",
-                      minWidth: "22px",
-                      textAlign: "center",
-                    }}
-                  >
-                    {comment.upvotes || 0}
-                  </span>
-                  <button
-                    onClick={() => handleDownvote(comment.id)}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      cursor: "pointer",
-                      fontSize: "0.95rem",
-                      color:
-                        userVotes[comment.id] === "downvote"
-                          ? "#e74c3c"
-                          : "#666",
-                      padding: "0",
-                      lineHeight: "1",
-                    }}
-                    title="Downvote"
-                  >
-                    ⬇
-                  </button>
-                </div>
+            comments.map((comment) => {
+              const isGhost = !comment.author || comment.author === "Unknown";
+              const isAuthor = comment.author === username;
+              const isEditing = editingReply === comment.id;
 
+              return (
                 <div
-                  className="comment-header"
+                  key={comment.id}
+                  className="comment-item"
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    marginBottom: "12px",
-                    paddingRight: "80px",
+                    background: "#1a1a1a",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "20px",
+                    marginBottom: "15px",
+                    position: "relative",
                   }}
                 >
-                  <span
-                    className="comment-avatar"
+                  {/* Upvote/Downvote for comments */}
+                  {!isGhost && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "15px",
+                        right: "15px",
+                        display: "flex",
+                        gap: "4px",
+                        alignItems: "center",
+                        background: "#0a0a0a",
+                        padding: "5px 8px",
+                        borderRadius: "20px",
+                        border: "1px solid #333",
+                      }}
+                    >
+                      <button
+                        onClick={() => handleUpvote(comment.id)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "0.95rem",
+                          color:
+                            userVotes[comment.id] === "upvote"
+                              ? "#1db954"
+                              : "#666",
+                          padding: "0",
+                          lineHeight: "1",
+                        }}
+                        title="Upvote"
+                      >
+                        ⬆
+                      </button>
+                      <span
+                        style={{
+                          fontWeight: "bold",
+                          fontSize: "0.85rem",
+                          color:
+                            (comment.upvotes || 0) > 0
+                              ? "#1db954"
+                              : (comment.upvotes || 0) < 0
+                                ? "#e74c3c"
+                                : "#888",
+                          minWidth: "22px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {comment.upvotes || 0}
+                      </span>
+                      <button
+                        onClick={() => handleDownvote(comment.id)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          fontSize: "0.95rem",
+                          color:
+                            userVotes[comment.id] === "downvote"
+                              ? "#e74c3c"
+                              : "#666",
+                          padding: "0",
+                          lineHeight: "1",
+                        }}
+                        title="Downvote"
+                      >
+                        ⬇
+                      </button>
+                    </div>
+                  )}
+
+                  <div
+                    className="comment-header"
                     style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "50%",
-                      background: "#555",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
+                      gap: "10px",
+                      marginBottom: "12px",
+                      paddingRight: "80px",
                     }}
                   >
-                    {comment.author.charAt(0)}
-                  </span>
-                  <span
-                    className="comment-author"
-                    style={{ fontWeight: "bold" }}
-                  >
-                    {comment.author}
-                  </span>
-                  <span className="separator" style={{ color: "#666" }}>
-                    •
-                  </span>
-                  <span
-                    className="comment-time"
-                    style={{ color: "#888", fontSize: "0.9rem" }}
-                  >
-                    {formatTimeAgo(comment.createdAt)}
-                  </span>
-                </div>
-                <div
-                  className="comment-content"
-                  style={{ marginBottom: "12px" }}
-                >
-                  <p style={{ lineHeight: "1.5", textAlign: "left" }}>
-                    {comment.content}
-                  </p>
-                </div>
-
-                <button
-                  className="reply-btn"
-                  onClick={() =>
-                    setReplyingTo(replyingTo === comment.id ? null : comment.id)
-                  }
-                  style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#888",
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                    padding: "0",
-                  }}
-                >
-                  💬 Reply
-                </button>
-
-                {replyingTo === comment.id && (
-                  <div
-                    className="reply-input-container"
-                    style={{ marginTop: "15px", display: "flex", gap: "10px" }}
-                  >
-                    <div
-                      className="user-avatar small"
+                    <span
+                      className="comment-avatar"
                       style={{
-                        width: "32px",
-                        height: "32px",
+                        width: "36px",
+                        height: "36px",
                         borderRadius: "50%",
                         background: "#555",
                         display: "flex",
@@ -940,94 +1096,314 @@ function ThreadDetail() {
                         justifyContent: "center",
                       }}
                     >
-                      {username.charAt(0)}
-                    </div>
-                    <div className="input-wrapper" style={{ flex: 1 }}>
-                      <textarea
-                        value={replyInputs[comment.id] || ""}
-                        onChange={(e) =>
-                          handleReplyInputChange(comment.id, e.target.value)
-                        }
-                        placeholder={`Reply to ${comment.author}...`}
-                        className="reply-textarea"
-                        rows={3}
+                      {isGhost ? "?" : comment.author.charAt(0)}
+                    </span>
+                    <span
+                      className="comment-author"
+                      style={{
+                        fontWeight: "bold",
+                        color: isGhost ? "#666" : "inherit",
+                        fontStyle: isGhost ? "italic" : "normal",
+                      }}
+                    >
+                      {isGhost ? "[deleted]" : comment.author}
+                    </span>
+                    <span className="separator" style={{ color: "#666" }}>
+                      •
+                    </span>
+                    <span
+                      className="comment-time"
+                      style={{ color: "#888", fontSize: "0.9rem" }}
+                    >
+                      {formatTimeAgo(comment.createdAt)}
+                    </span>
+                    {comment.updatedAt && !isGhost && (
+                      <span
                         style={{
-                          width: "100%",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          background: "#0a0a0a",
-                          border: "1px solid #444",
-                          color: "white",
-                          fontSize: "0.95rem",
-                          fontFamily: "inherit",
-                          boxSizing: "border-box",
+                          fontSize: "0.75rem",
+                          color: "#666",
+                          fontStyle: "italic",
+                          marginLeft: "5px",
                         }}
-                      />
+                        title={`Edited at ${new Date(
+                          comment.updatedAt,
+                        ).toLocaleString()}`}
+                      >
+                        (edited)
+                      </span>
+                    )}
+                  </div>
+                  <div
+                    className="comment-content"
+                    style={{ marginBottom: "12px" }}
+                  >
+                    {isEditing ? (
+                      <div>
+                        <textarea
+                          value={editReplyInput}
+                          onChange={(e) => setEditReplyInput(e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "8px",
+                            background: "#0a0a0a",
+                            border: "1px solid #1db954",
+                            color: "white",
+                            fontSize: "0.95rem",
+                            fontFamily: "inherit",
+                            boxSizing: "border-box",
+                          }}
+                          rows={3}
+                        />
+                        <div
+                          style={{
+                            marginTop: "8px",
+                            display: "flex",
+                            gap: "10px",
+                          }}
+                        >
+                          <button
+                            onClick={() => handleUpdateReply(comment.id)}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "15px",
+                              background: "#1db954",
+                              color: "black",
+                              fontWeight: "bold",
+                              border: "none",
+                              cursor: "pointer",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingReply(null)}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "15px",
+                              background: "transparent",
+                              border: "1px solid #444",
+                              color: "#ccc",
+                              cursor: "pointer",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <p
+                          style={{
+                            lineHeight: "1.5",
+                            textAlign: "left",
+                            color: isGhost ? "#666" : "inherit",
+                            fontStyle: isGhost ? "italic" : "normal",
+                          }}
+                        >
+                          {isGhost
+                            ? "[This message has been deleted]"
+                            : comment.content}
+                        </p>
+                        {comment.updatedAt && !isGhost && (
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: "#1db954",
+                              opacity: 0.6,
+                              marginTop: "8px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            <span>✎</span>
+                            <span>This comment was edited</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {!isEditing && (
+                    <div
+                      style={{
+                        marginTop: "10px",
+                        display: "flex",
+                        gap: "15px",
+                        alignItems: "center",
+                      }}
+                    >
+                      {!isGhost && (
+                        <button
+                          className="reply-btn"
+                          onClick={() =>
+                            setReplyingTo(
+                              replyingTo === comment.id ? null : comment.id,
+                            )
+                          }
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#888",
+                            cursor: "pointer",
+                            fontSize: "0.85rem",
+                            padding: "0",
+                          }}
+                        >
+                          💬 Reply
+                        </button>
+                      )}
+                      {isAuthor && !isGhost && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingReply(comment.id);
+                              setEditReplyInput(comment.content);
+                            }}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "#888",
+                              cursor: "pointer",
+                              fontSize: "0.85rem",
+                              padding: "0",
+                            }}
+                          >
+                            ✎ Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteReply(comment.id)}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              color: "#e74c3c",
+                              cursor: "pointer",
+                              fontSize: "0.85rem",
+                              padding: "0",
+                            }}
+                          >
+                            🗑 Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {replyingTo === comment.id && !isGhost && (
+                    <div
+                      className="reply-input-container"
+                      style={{ marginTop: "15px", display: "flex", gap: "10px" }}
+                    >
                       <div
-                        className="reply-actions"
+                        className="user-avatar small"
                         style={{
-                          marginTop: "10px",
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "50%",
+                          background: "#555",
                           display: "flex",
-                          gap: "10px",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                       >
-                        <button
-                          onClick={() => handlePostReply(comment.id, 1)}
-                          disabled={!replyInputs[comment.id]?.trim()}
-                          className="post-reply-btn"
+                        {username.charAt(0)}
+                      </div>
+                      <div className="input-wrapper" style={{ flex: 1 }}>
+                        <textarea
+                          value={replyInputs[comment.id] || ""}
+                          onChange={(e) =>
+                            handleReplyInputChange(comment.id, e.target.value)
+                          }
+                          placeholder={`Reply to ${comment.author}...`}
+                          className="reply-textarea"
+                          rows={3}
                           style={{
-                            padding: "8px 16px",
-                            borderRadius: "20px",
-                            border: "none",
-                            background: replyInputs[comment.id]?.trim()
-                              ? "#1db954"
-                              : "#444",
-                            color: replyInputs[comment.id]?.trim()
-                              ? "black"
-                              : "#888",
-                            fontWeight: "bold",
-                            cursor: replyInputs[comment.id]?.trim()
-                              ? "pointer"
-                              : "not-allowed",
-                          }}
-                        >
-                          Post Reply
-                        </button>
-                        <button
-                          onClick={() => handleCancelReply(comment.id)}
-                          className="cancel-btn"
-                          style={{
-                            padding: "8px 16px",
-                            borderRadius: "20px",
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "8px",
+                            background: "#0a0a0a",
                             border: "1px solid #444",
-                            background: "transparent",
-                            color: "#ccc",
-                            cursor: "pointer",
+                            color: "white",
+                            fontSize: "0.95rem",
+                            fontFamily: "inherit",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                        <div
+                          className="reply-actions"
+                          style={{
+                            marginTop: "10px",
+                            display: "flex",
+                            gap: "10px",
                           }}
                         >
-                          Cancel
-                        </button>
+                          <button
+                            onClick={() => handlePostReply(comment.id, 1)}
+                            disabled={!replyInputs[comment.id]?.trim()}
+                            className="post-reply-btn"
+                            style={{
+                              padding: "8px 16px",
+                              borderRadius: "20px",
+                              border: "none",
+                              background: replyInputs[comment.id]?.trim()
+                                ? "#1db954"
+                                : "#444",
+                              color: replyInputs[comment.id]?.trim()
+                                ? "black"
+                                : "#888",
+                              fontWeight: "bold",
+                              cursor: replyInputs[comment.id]?.trim()
+                                ? "pointer"
+                                : "not-allowed",
+                            }}
+                          >
+                            Post Reply
+                          </button>
+                          <button
+                            onClick={() => handleCancelReply(comment.id)}
+                            className="cancel-btn"
+                            style={{
+                              padding: "8px 16px",
+                              borderRadius: "20px",
+                              border: "1px solid #444",
+                              background: "transparent",
+                              color: "#ccc",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <RenderReplies
-                  replies={comment.replies}
-                  depth={1}
-                  replyingTo={replyingTo}
-                  setReplyingTo={setReplyingTo}
-                  replyInputs={replyInputs}
-                  handleReplyInputChange={handleReplyInputChange}
-                  handlePostReply={handlePostReply}
-                  handleCancelReply={handleCancelReply}
-                  handleUpvote={handleUpvote}
-                  handleDownvote={handleDownvote}
-                  username={username}
-                  userVotes={userVotes}
-                />
-              </div>
-            ))
+                  <RenderReplies
+                    replies={comment.replies}
+                    depth={1}
+                    replyingTo={replyingTo}
+                    setReplyingTo={setReplyingTo}
+                    replyInputs={replyInputs}
+                    handleReplyInputChange={handleReplyInputChange}
+                    handlePostReply={handlePostReply}
+                    handleCancelReply={handleCancelReply}
+                    handleUpvote={handleUpvote}
+                    handleDownvote={handleDownvote}
+                    username={username}
+                    userVotes={userVotes}
+                    editingReply={editingReply}
+                    setEditingReply={setEditingReply}
+                    editReplyInput={editReplyInput}
+                    setEditReplyInput={setEditReplyInput}
+                    handleUpdateReply={handleUpdateReply}
+                    handleDeleteReply={handleDeleteReply}
+                  />
+                </div>
+              );
+            })
           )}
         </div>
       </div>

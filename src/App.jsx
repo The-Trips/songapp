@@ -16,6 +16,7 @@ import ProfilePage from "./ProfilePage";
 import ScenesList from "./ScenesList";
 import SceneDetail from "./SceneDetail";
 import CreateScene from "./CreateScene";
+import EditScene from "./EditScene";
 import CreateThread from "./CreateThread";
 import ThreadDetail from "./ThreadDetail";
 import "./App.css";
@@ -94,6 +95,12 @@ function App() {
             path="/create-scene"
             element={
               isAuthenticated ? <CreateScene /> : <Navigate to="/login" />
+            }
+          />
+          <Route
+            path="/scene/:id/edit"
+            element={
+              isAuthenticated ? <EditScene /> : <Navigate to="/login" />
             }
           />
           <Route
