@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./threads.css";
+import { normalizeScene, formatTimeAgo } from "./Helpers";
 
 const API_URL = "http://localhost:8000";
 
@@ -28,32 +29,7 @@ function ScenesList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const normalizeScene = (item) => {
-    // Supports both "scene" + old "community" payloads with different field names
-    const id = item.id ?? item._id;
 
-    return {
-      id,
-      name: item.name,
-      description: item.description,
-      imageUrl: item.imageUrl,
-      isOfficial: Boolean(item.isOfficial),
-
-      // members/followers
-      members:
-        item.members ??
-        item.memberCount ??
-        item.followers ??
-        item.followersCount ??
-        0,
-
-      // threads count (fallback 0)
-      threads: item.numThreads,
-
-      createdAt: item.createdAt,
-      createdBy: item.owner,
-    };
-  };
 
   const fetchScenes = async () => {
     setIsLoading(true);
@@ -138,21 +114,7 @@ function ScenesList() {
     return scenes;
   }, [scenes, filter, joinedScenes]);
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "Unknown";
-    const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return "Unknown";
 
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 30) return `${diffDays} days ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-  };
 
   if (isLoading) {
     return (
@@ -403,7 +365,7 @@ function ScenesList() {
                   }}
                 >
                   <span style={{ fontSize: "0.7rem", color: "#666" }}>
-                    Created {formatDate(scene.createdAt)}
+                    Created {formatTimeAgo(scene.createdAt)}
                     {scene.createdBy ? ` by ${scene.createdBy}` : ""}
                   </span>
 

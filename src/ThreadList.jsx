@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import './threads.css';
+import { countReplies } from './Helpers';
 
-const countReplies = (replies) => {
-  if (!replies || replies.length === 0) return 0;
-  return replies.reduce(
-    (total, reply) => total + 1 + countReplies(reply.replies || []),
-    0
-  );
-};
+
 
 function ThreadList({ isAuthenticated }) {
   const navigate = useNavigate();

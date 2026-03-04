@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Settings } from "lucide-react";
 import "./threads.css";
+import { normalizeScene, normalizeThread } from "./Helpers";
 
 const API_URL = "http://localhost:8000";
 
@@ -39,39 +40,7 @@ function SceneDetail() {
     fetchSceneData();
   }, [sceneIdRaw]);
 
-  const normalizeScene = (data) => {
-    return {
-      id: data.scene_id,
-      name: data.name,
-      description: data.description,
-      imageUrl: data.imageUrl,
-      isOfficial: Boolean(data.isOfficial ?? data.official ?? false),
-      members:
-        data.members ??
-        data.memberCount ??
-        data.followers ??
-        data.followersCount ??
-        0,
-      createdBy: data.owner,
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
-      albumId: data.albumId ?? null,
-    };
-  };
 
-  const normalizeThread = (t) => {
-    return {
-      id: t.id ?? t.t_id ?? t._id,
-      sceneId: sceneIdNum,
-      title: t.title ?? "(No title)",
-      author: t.author ?? t.username ?? "Unknown",
-      content: t.content ?? t.text ?? "",
-      upvotes: t.upvotes ?? t.likes ?? 0,
-      commentCount: t.commentCount ?? t.comments ?? 0,
-      createdAt: t.createdAt ?? t.date_created ?? t.date ?? null,
-      isPinned: Boolean(t.isPinned ?? false),
-    };
-  };
 
   const fetchSceneData = async () => {
     setIsLoading(true);
@@ -571,16 +540,17 @@ function SceneDetail() {
 
               <p
                 style={{
-                  color: "#aaa",
+                  color: thread.author === "Unknown" ? "#666" : "#aaa",
                   fontSize: "0.95rem",
                   marginBottom: "12px",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   textAlign: "left",
+                  fontStyle: thread.author === "Unknown" ? "italic" : "normal"
                 }}
               >
-                {thread.content}
+                {thread.author === "Unknown" ? "[This message has been deleted]" : thread.content}
               </p>
 
               <div
@@ -604,9 +574,14 @@ function SceneDetail() {
                     fontSize: "0.9rem",
                   }}
                 >
-                  {thread.author?.charAt(0) || "U"}
+                  {thread.author === "Unknown" ? "?" : thread.author?.charAt(0) || "U"}
                 </span>
-                <span>{thread.author || "Unknown"}</span>
+                <span style={{ 
+                  color: thread.author === "Unknown" ? "#666" : "inherit",
+                  fontStyle: thread.author === "Unknown" ? "italic" : "normal"
+                }}>
+                  {thread.author === "Unknown" ? "[deleted]" : thread.author}
+                </span>
                 <span>•</span>
                 <span>{formatTimeAgo(thread.createdAt)}</span>
               </div>
