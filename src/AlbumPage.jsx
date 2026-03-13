@@ -1,6 +1,7 @@
 // src/AlbumPage.jsx
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Edit3, Trash2 } from "lucide-react";
 import "./App.css";
 
 function AlbumPage({ isAuthenticated }) {
@@ -37,6 +38,16 @@ function AlbumPage({ isAuthenticated }) {
         const reviewJson = await reviewRes.json();
         setReviews(reviewJson);
 
+        // Pre-fill if current user already reviewed
+        const userReview = reviewJson.find((r) => r.user === currentUsername);
+        if (userReview) {
+          setUserRating(userReview.rating);
+          setReviewText(userReview.text);
+        } else {
+          setUserRating(0);
+          setReviewText("");
+        }
+
         fetchMoods();
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -65,7 +76,41 @@ function AlbumPage({ isAuthenticated }) {
       navigate("/login");
       return;
     }
+    // Pre-populate if not already set (e.g. if reviews list was updated)
+    const existing = reviews.find((r) => r.user === currentUsername);
+    if (existing) {
+      setUserRating(existing.rating);
+      setReviewText(existing.text);
+    }
     setShowReviewModal(true);
+  };
+
+  const handleDeleteReview = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to remove your rating and review for this album?",
+      )
+    )
+      return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/albums/${id}/reviews?username=${currentUsername}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (res.ok) {
+        setReviews((prev) => prev.filter((r) => r.user !== currentUsername));
+        setUserRating(0);
+        setReviewText("");
+        alert("Review removed successfully.");
+      } else {
+        alert("Failed to delete review.");
+      }
+    } catch (err) {
+      alert("Error connecting to server.");
+    }
   };
 
   const handleSceneClick = () => {
@@ -119,6 +164,7 @@ function AlbumPage({ isAuthenticated }) {
     }
     setIsSubmitting(true);
     try {
+      const existingReview = reviews.find((r) => r.user === currentUsername);
       const payload = {
         album_id: id,
         rating: userRating,
@@ -136,11 +182,18 @@ function AlbumPage({ isAuthenticated }) {
           text: reviewText,
           rating: userRating,
           date: new Date().toISOString().split("T")[0],
+          date_updated: new Date().toISOString().replace("T", " ").split(".")[0],
+          created_at:
+            existingReview?.created_at ||
+            new Date().toISOString().replace("T", " ").split(".")[0],
         };
-        setReviews([newReview, ...reviews]);
+        // Remove old if exists and add new at top
+        setReviews((prev) => [
+          newReview,
+          ...prev.filter((r) => r.user !== currentUsername),
+        ]);
         setShowReviewModal(false);
-        setReviewText("");
-        setUserRating(0);
+        // Note: we keep userRating/reviewText set so the "Edit" modal remembers them
       } else {
         alert("Failed to save review");
       }
@@ -305,23 +358,92 @@ function AlbumPage({ isAuthenticated }) {
           {reviews.length === 0 ? (
             <p style={{ color: "#666" }}>No reviews yet.</p>
           ) : (
-            reviews.map((r, i) => (
-              <div key={i} style={styles.reviewCard}>
-                <div style={styles.reviewHeader}>
-                  <div style={{ fontWeight: "bold", color: "#fff" }}>
-                    {r.user}
+            reviews.map((r, i) => {
+              const isMine = r.user === currentUsername;
+              const isEdited = r.date_updated && r.date_updated !== r.created_at;
+
+              return (
+                <div key={i} style={styles.reviewCard}>
+                  <div style={styles.reviewHeader}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                      }}
+                    >
+                      <div style={{ fontWeight: "bold", color: "#fff" }}>
+                        {r.user}
+                        {isMine && (
+                          <span
+                            style={{
+                              marginLeft: "8px",
+                              fontSize: "0.7rem",
+                              backgroundColor: "#1db954",
+                              color: "black",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            YOU
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ color: "#f5c518" }}>
+                      {"★".repeat(Math.round(r.rating || 0))}
+                      <span style={{ color: "#444" }}>
+                        {"★".repeat(5 - Math.round(r.rating || 0))}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ color: "#f5c518" }}>
-                    {"★".repeat(Math.round(r.rating || 0))}
-                    <span style={{ color: "#444" }}>
-                      {"★".repeat(5 - Math.round(r.rating || 0))}
-                    </span>
+                  <p style={styles.reviewText}>"{r.text}"</p>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={styles.reviewDate}>
+                      {r.date}
+                      {isEdited && (
+                        <span
+                          style={{
+                            marginLeft: "8px",
+                            fontStyle: "italic",
+                            opacity: 0.6,
+                          }}
+                        >
+                          (edited)
+                        </span>
+                      )}
+                    </div>
+                    {isMine && (
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <button
+                          onClick={handleReviewButtonClick}
+                          style={styles.iconButton}
+                          title="Edit Review"
+                        >
+                          <Edit3 size={14} />
+                        </button>
+                        <button
+                          onClick={handleDeleteReview}
+                          style={{
+                            ...styles.iconButton,
+                            color: "#ff4444",
+                          }}
+                          title="Delete Review"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <p style={styles.reviewText}>"{r.text}"</p>
-                <div style={styles.reviewDate}>{r.date}</div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
@@ -479,6 +601,24 @@ const styles = {
     padding: "20px",
     borderRadius: "8px",
     border: "1px solid #282828",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+  },
+  iconButton: {
+    background: "transparent",
+    border: "none",
+    color: "#888",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    padding: "4px",
+    borderRadius: "4px",
+    transition: "all 0.2s",
+    "&:hover": {
+      backgroundColor: "rgba(255,255,255,0.1)",
+      color: "white",
+    },
   },
   reviewHeader: {
     display: "flex",
