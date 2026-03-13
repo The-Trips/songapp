@@ -71,14 +71,8 @@ function App() {
         >
           <Route path="/" element={<Homepage />} />
           <Route
-            path="/profile"
-            element={
-              isAuthenticated ? (
-                <ProfilePage onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
+            path="/profile/:username"
+            element={<ProfilePage isAuthenticated={isAuthenticated} onLogout={handleLogout} />}
           />
 
           {/* Album Page */}
@@ -107,6 +101,7 @@ function App() {
             }
           />
         </Route>
+
       </Routes>
     </Router>
   );

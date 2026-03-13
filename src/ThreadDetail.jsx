@@ -84,6 +84,7 @@ const RenderReplies = ({
   username,
   maxDepth = 3,
   userVotes,
+  navigate,
 }) => {
   if (!replies || replies.length === 0) return null;
 
@@ -160,7 +161,13 @@ const RenderReplies = ({
 
           <div className="reply-header">
             <span className="reply-avatar">{reply.author.charAt(0)}</span>
-            <span className="reply-author">{reply.author}</span>
+            <span 
+              className="reply-author"
+              onClick={(e) => { e.stopPropagation(); navigate(`/profile/${reply.author}`); }}
+              style={{ fontWeight: "bold", color: "#ccc", cursor: "pointer", textDecoration: "underline" }}
+            >
+              {reply.author}
+            </span>
             <span className="separator">•</span>
             <span className="reply-time">{formatTimeAgo(reply.createdAt)}</span>
           </div>
@@ -287,6 +294,7 @@ const RenderReplies = ({
             username={username}
             maxDepth={maxDepth}
             userVotes={userVotes}
+            navigate={navigate}
           />
         </div>
       ))}
@@ -603,7 +611,8 @@ function ThreadDetail() {
           </span>
           <span
             className="author-name"
-            style={{ fontWeight: "bold", color: "#ccc" }}
+            onClick={(e) => { e.stopPropagation(); navigate(`/profile/${thread.author}`); }}
+            style={{ fontWeight: "bold", color: "#ccc", cursor: "pointer", textDecoration: "underline" }}
           >
             {thread.author}
           </span>
@@ -883,7 +892,8 @@ function ThreadDetail() {
                   </span>
                   <span
                     className="comment-author"
-                    style={{ fontWeight: "bold" }}
+                    onClick={(e) => { e.stopPropagation(); navigate(`/profile/${comment.author}`); }}
+                    style={{ fontWeight: "bold", color: "#ccc", cursor: "pointer", textDecoration: "underline" }}
                   >
                     {comment.author}
                   </span>
@@ -1025,6 +1035,7 @@ function ThreadDetail() {
                   handleDownvote={handleDownvote}
                   username={username}
                   userVotes={userVotes}
+                  navigate={navigate}
                 />
               </div>
             ))

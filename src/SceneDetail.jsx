@@ -100,40 +100,46 @@ function SceneDetail() {
     }
   };
 
-  const handleJoinToggle = () => {
+const handleJoinToggle = async () => {
     const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (isAuthenticated !== "true") {
-      alert("Please log in to join communities");
+      alert("Please log in to join scenes");
       navigate("/login");
       return;
     }
 
-    const storedUser = localStorage.getItem("app_username") || "User";
-    const savedJoined =
-      localStorage.getItem(`joined_scenes_${storedUser}`) || "[]";
-    let joinedList = JSON.parse(savedJoined);
+    try {
+      const res = await fetch(`${API_URL}/api/scenes/${sceneIdNum}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setIsJoined(data.joined);
+        
+        // Optimistically update member count
+        setScene(prev => prev ? { 
+            ...prev, 
+            members: data.joined ? (prev.members || 0) + 1 : Math.max(0, (prev.members || 0) - 1) 
+        } : prev);
 
-    if (isJoined) {
-      joinedList = joinedList.filter((id) => id !== sceneIdNum);
-      setScene((prev) =>
-        prev
-          ? { ...prev, members: Math.max(0, (prev.members || 0) - 1) }
-          : prev,
-      );
-    } else {
-      joinedList = Array.from(new Set([...joinedList, sceneIdNum]));
-      setScene((prev) =>
-        prev ? { ...prev, members: (prev.members || 0) + 1 } : prev,
-      );
+        // SYNC WITH LOCAL STORAGE
+        const storageKey = `joined_scenes_${username}`;
+        let savedJoined = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        
+        if (data.joined) {
+            if (!savedJoined.includes(sceneIdNum)) savedJoined.push(sceneIdNum);
+        } else {
+            savedJoined = savedJoined.filter(id => id !== sceneIdNum);
+        }
+        
+        localStorage.setItem(storageKey, JSON.stringify(savedJoined));
+      }
+    } catch (err) {
+      console.error("Failed to toggle join", err);
     }
-
-    localStorage.setItem(
-      `joined_scenes_${storedUser}`,
-      JSON.stringify(joinedList),
-    );
-    setIsJoined((v) => !v);
-
-    // TODO: later persist join/leave to backend
   };
 
   const handleCreateThread = () => {
@@ -252,7 +258,7 @@ function SceneDetail() {
     >
       {/* Back Button */}
       <button
-        onClick={() => navigate("/communities")}
+        onClick={() => navigate("/scenes")}
         className="back-button"
         style={{
           background: "transparent",

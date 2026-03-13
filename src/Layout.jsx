@@ -19,6 +19,7 @@ function Layout({ onLogout, isAuthenticated }) {
   const location = useLocation();
   const activeTab = location.pathname;
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const loggedInUsername = localStorage.getItem("app_username");
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -38,11 +39,17 @@ function Layout({ onLogout, isAuthenticated }) {
     { name: "Search/Explore", path: "/search", icon: <Search size={20} /> },
     { name: "Scenes", path: "/scenes", icon: <Users size={20} /> },
     { name: "Activity", path: "/activity", icon: <Bell size={20} /> },
-    { name: "Profile", path: "/profile", icon: <User size={20} /> },
+    // Dynamically set the profile path if the user is logged in
+    {
+      name: "Profile",
+      path: isAuthenticated && loggedInUsername ? `/profile/${loggedInUsername}` : "/profile",
+      icon: <User size={20} />
+    },
   ];
 
   const handleNavClick = (path) => {
-    if (path === "/profile" && !isAuthenticated) {
+
+    if (path.includes("/profile") && !isAuthenticated) {
       if (
         window.confirm(
           "You need to create an account to view your profile. Sign up now?",
@@ -53,7 +60,6 @@ function Layout({ onLogout, isAuthenticated }) {
       return;
     }
     navigate(path);
-    setIsMenuOpen(false);
   };
 
   return (
@@ -105,7 +111,7 @@ function Layout({ onLogout, isAuthenticated }) {
           {navItems.map((item) => (
             <li
               key={item.name}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavClick(item.path)}
               style={{
                 padding: "12px 16px",
                 cursor: "pointer",

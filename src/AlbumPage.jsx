@@ -22,6 +22,13 @@ function AlbumPage({ isAuthenticated }) {
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+
+  //List State
+
+  const [showListModal, setShowListModal] = useState(false);
+  const [userLists, setUserLists] = useState([]);
+  const [newListName, setNewListName] = useState("");
 
   // --- FETCH DATA ---
   useEffect(() => {
@@ -88,10 +95,10 @@ function AlbumPage({ isAuthenticated }) {
       prev.map((m) =>
         m.id === moodId
           ? {
-              ...m,
-              selected: !m.selected,
-              count: m.selected ? m.count - 1 : m.count + 1,
-            }
+            ...m,
+            selected: !m.selected,
+            count: m.selected ? m.count - 1 : m.count + 1,
+          }
           : m,
       ),
     );
@@ -161,12 +168,57 @@ function AlbumPage({ isAuthenticated }) {
   const averageRating =
     reviews.length > 0
       ? (
-          reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length
-        ).toFixed(1)
+        reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length
+      ).toFixed(1)
       : "N/A";
 
   if (loading || !albumData)
     return <div style={{ padding: "50px", color: "white" }}>Loading...</div>;
+
+  const handleOpenListModal = async () => {
+    if (!currentUsername) {
+      navigate("/login");
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:8000/api/users/${currentUsername}`);
+      const data = await res.json();
+      setUserLists(data.lists || []);
+      setShowListModal(true);
+    } catch (err) {
+      console.error("Failed to load lists", err);
+    }
+  };
+
+  const handleAddToList = async (listId) => {
+    try {
+      await fetch(`http://localhost:8000/api/lists/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ list_id: listId, album_id: parseInt(id) })
+      });
+      alert("Album added to list!");
+      setShowListModal(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreateListAndAdd = async () => {
+    if (!newListName.trim()) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/users/${currentUsername}/lists`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: currentUsername, name: newListName })
+      });
+      const data = await res.json();
+      await handleAddToList(data.id);
+      setNewListName("");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div style={styles.pageContainer}>
@@ -242,6 +294,12 @@ function AlbumPage({ isAuthenticated }) {
             >
               👥 Scene
             </button>
+
+            {/* NEW LIST BUTTON */}
+            <button onClick={handleOpenListModal} style={styles.secondaryButton}>
+              + Add to List
+            </button>
+  
           </div>
         </div>
       </div>
@@ -372,6 +430,38 @@ function AlbumPage({ isAuthenticated }) {
               >
                 {isSubmitting ? "Saving..." : "Post Review"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showListModal && currentUsername && (
+        <div style={styles.modalOverlay} onClick={() => setShowListModal(false)}>
+          <div style={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginTop: 0, marginBottom: "20px" }}>Add to List</h2>
+
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+              <input
+                type="text"
+                placeholder="New List Name..."
+                value={newListName}
+                onChange={e => setNewListName(e.target.value)}
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #444', background: '#333', color: 'white' }}
+              />
+              <button onClick={handleCreateListAndAdd} style={styles.submitButton}>Create</button>
+            </div>
+
+            <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {userLists.map(list => (
+                <button
+                  key={list.id}
+                  onClick={() => handleAddToList(list.id)}
+                  style={{ padding: '12px', background: '#333', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', textAlign: 'left' }}
+                >
+                  {list.name}
+                </button>
+              ))}
+              {userLists.length === 0 && <p style={{ color: '#888', textAlign: 'center' }}>No lists yet.</p>}
             </div>
           </div>
         </div>

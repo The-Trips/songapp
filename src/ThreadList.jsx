@@ -101,7 +101,13 @@ function ThreadList({ isAuthenticated }) {
                 <div className="thread-meta">
                   <span className="author">
                     <span className="avatar">{thread.author.charAt(0)}</span>
-                    {thread.author}
+                    <span 
+                      className="author-name" 
+                      onClick={(e) => { e.stopPropagation(); navigate(`/profile/${thread.author}`); }}
+                      style={{ fontWeight: "bold", color: "#ccc", cursor: "pointer", textDecoration: "underline" }}
+                    >
+                      {thread.author}
+                    </span>
                   </span>
                   <span className="separator">•</span>
                   <span className="replies">{thread.replies} replies</span>
