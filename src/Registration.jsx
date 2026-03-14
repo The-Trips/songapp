@@ -1,11 +1,25 @@
 // src/Registration.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { 
+  User, 
+  Mail, 
+  Lock, 
+  ArrowRight, 
+  AlertCircle 
+} from 'lucide-react';
+import './Registration.css';
 
 function Registration() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    confirmPassword: '' 
+  });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,9 +28,11 @@ function Registration() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
+      setIsSubmitting(false);
       return;
     }
 
@@ -37,119 +53,108 @@ function Registration() {
       }
 
       // Success! Move to step 2: Create Username
-      // We pass the email in 'state' so the next page knows who to attach the username to
       navigate('/create-username', { state: { email: formData.email } });
       
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={{ marginBottom: '20px', color: '#fff' }}>Join SongApp</h2>
-        {error && <div style={styles.error}>{error}</div>}
+    <div className="reg-page-wrapper">
+      <div className="reg-card">
+        <header className="reg-header">
+          <div className="reg-logo">SongApp</div>
+          <p className="reg-subtitle">Create your account to start your journey</p>
+        </header>
+
+        <div className="reg-step-indicator">
+          <div className="step-dot active"></div>
+          <div className="step-dot"></div>
+        </div>
+
+        {error && (
+          <div className="reg-error-box">
+            <AlertCircle size={18} />
+            <span>{error}</span>
+          </div>
+        )}
         
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <input 
-            type="text" 
-            name="name" 
-            placeholder="Full Name" 
-            value={formData.name} 
-            onChange={handleChange} 
-            style={styles.input} 
-            required 
-          />
-          <input 
-            type="email" 
-            name="email" 
-            placeholder="Email Address" 
-            value={formData.email} 
-            onChange={handleChange} 
-            style={styles.input} 
-            required 
-          />
-          <input 
-            type="password" 
-            name="password" 
-            placeholder="Password" 
-            value={formData.password} 
-            onChange={handleChange} 
-            style={styles.input} 
-            required 
-          />
-          <input 
-            type="password" 
-            name="confirmPassword" 
-            placeholder="Confirm Password" 
-            value={formData.confirmPassword} 
-            onChange={handleChange} 
-            style={styles.input} 
-            required 
-          />
-          <button type="submit" style={styles.button}>Next</button>
+        <form onSubmit={handleSubmit} className="reg-form">
+          <div className="reg-input-group">
+            <input 
+              type="text" 
+              name="name" 
+              placeholder="Full Name" 
+              className="reg-input"
+              value={formData.name} 
+              onChange={handleChange} 
+              required 
+            />
+            <User className="reg-input-icon" size={20} />
+          </div>
+
+          <div className="reg-input-group">
+            <input 
+              type="email" 
+              name="email" 
+              placeholder="Email Address" 
+              className="reg-input"
+              value={formData.email} 
+              onChange={handleChange} 
+              required 
+            />
+            <Mail className="reg-input-icon" size={20} />
+          </div>
+
+          <div className="reg-input-group">
+            <input 
+              type="password" 
+              name="password" 
+              placeholder="Password" 
+              className="reg-input"
+              value={formData.password} 
+              onChange={handleChange} 
+              required 
+            />
+            <Lock className="reg-input-icon" size={20} />
+          </div>
+
+          <div className="reg-input-group">
+            <input 
+              type="password" 
+              name="confirmPassword" 
+              placeholder="Confirm Password" 
+              className="reg-input"
+              value={formData.confirmPassword} 
+              onChange={handleChange} 
+              required 
+            />
+            <Lock className="reg-input-icon" size={20} />
+          </div>
+
+          <button 
+            type="submit" 
+            className="reg-next-btn"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Processing...' : (
+              <>
+                Continue <ArrowRight size={20} />
+              </>
+            )}
+          </button>
         </form>
 
-        <p style={{ marginTop: '15px', color: '#aaa' }}>
-          Already have an account? <Link to="/login" style={styles.link}>Log in</Link>
-        </p>
+        <footer className="reg-footer">
+          Already have an account? 
+          <Link to="/login" className="reg-login-link">Log in</Link>
+        </footer>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    height: '100vh',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#000',
-    color: 'white'
-  },
-  card: {
-    width: '100%',
-    maxWidth: '400px',
-    padding: '40px',
-    backgroundColor: '#1a1a1a',
-    borderRadius: '12px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
-    textAlign: 'center'
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '15px'
-  },
-  input: {
-    padding: '12px',
-    borderRadius: '5px',
-    border: '1px solid #333',
-    backgroundColor: '#222',
-    color: 'white',
-    fontSize: '1rem'
-  },
-  button: {
-    padding: '12px',
-    borderRadius: '5px',
-    border: 'none',
-    backgroundColor: '#770505',
-    color: 'white',
-    fontSize: '1rem',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    marginTop: '10px'
-  },
-  error: {
-    color: '#ff4444',
-    marginBottom: '15px',
-    fontSize: '0.9rem'
-  },
-  link: {
-    color: '#fff',
-    textDecoration: 'underline'
-  }
-};
 
 export default Registration;

@@ -1,11 +1,26 @@
 // src/Login.jsx
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { 
+  LogIn, 
+  Mail, 
+  Lock, 
+  AlertCircle,
+  CheckCircle2
+} from "lucide-react";
+import './Registration.css';
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const location = useLocation();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Check if we just came from account creation success
+  const successMessage = location.state?.accountCreated 
+    ? "Account created successfully! Please log in." 
+    : "";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -13,84 +28,123 @@ function Login({ onLogin }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
+    setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:8000/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Login failed');
+        throw new Error(data.detail || "Login failed");
       }
 
       // Handle "Incomplete" account (Registered but didn't pick username)
-      if (data.status === 'incomplete') {
-         navigate('/create-username', { state: { email: data.email } });
-         return;
+      if (data.status === "incomplete") {
+        navigate("/create-username", { state: { email: data.email } });
+        return;
       }
 
-      // Success: Save data for the app to use
-      localStorage.setItem('app_username', data.username);
-      
-      // Trigger App.jsx state update
-      onLogin(); 
-      
-      navigate('/');
-      
+      // Success
+      localStorage.setItem("app_username", data.username);
+      onLogin();
+      navigate("/");
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={{ marginBottom: '20px', color: '#fff' }}>Welcome Back</h2>
-        {error && <div style={styles.error}>{error}</div>}
-        
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <input 
-            type="email" 
-            name="email" 
-            placeholder="Email" 
-            value={formData.email} 
-            onChange={handleChange} 
-            style={styles.input} 
-            required 
-          />
-          <input 
-            type="password" 
-            name="password" 
-            placeholder="Password" 
-            value={formData.password} 
-            onChange={handleChange} 
-            style={styles.input} 
-            required 
-          />
-          <button type="submit" style={styles.button}>Log In</button>
+    <div className="reg-page-wrapper">
+      <div className="reg-card">
+        <header className="reg-header">
+          <div className="reg-logo">SongApp</div>
+          <p className="reg-subtitle">Welcome back! Sign in to continue</p>
+        </header>
+
+        {successMessage && (
+          <div 
+            style={{ 
+              background: 'rgba(29, 185, 84, 0.1)', 
+              border: '1px solid rgba(29, 185, 84, 0.2)', 
+              color: '#4ade80',
+              padding: '12px',
+              borderRadius: '12px',
+              fontSize: '0.85rem',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}
+          >
+            <CheckCircle2 size={18} />
+            {successMessage}
+          </div>
+        )}
+
+        {error && (
+          <div className="reg-error-box">
+            <AlertCircle size={18} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="reg-form">
+          <div className="reg-input-group">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              className="reg-input"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+            <Mail className="reg-input-icon" size={20} />
+          </div>
+
+          <div className="reg-input-group">
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              className="reg-input"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <Lock className="reg-input-icon" size={20} />
+          </div>
+
+          <button 
+            type="submit" 
+            className="reg-next-btn"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Logging in...' : (
+              <>
+                Log In <LogIn size={20} />
+              </>
+            )}
+          </button>
         </form>
 
-        <p style={{ marginTop: '15px', color: '#aaa' }}>
-          Don't have an account? <Link to="/register" style={styles.link}>Sign up</Link>
-        </p>
+        <footer className="reg-footer">
+          Don't have an account?{" "}
+          <Link to="/register" className="reg-login-link">
+            Sign up
+          </Link>
+        </footer>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: { height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#000', color: 'white' },
-  card: { width: '100%', maxWidth: '400px', padding: '40px', backgroundColor: '#1a1a1a', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.5)', textAlign: 'center' },
-  form: { display: 'flex', flexDirection: 'column', gap: '15px' },
-  input: { padding: '12px', borderRadius: '5px', border: '1px solid #333', backgroundColor: '#222', color: 'white', fontSize: '1rem' },
-  button: { padding: '12px', borderRadius: '5px', border: 'none', backgroundColor: '#770505', color: 'white', fontSize: '1rem', cursor: 'pointer', fontWeight: 'bold' },
-  error: { color: '#ff4444', marginBottom: '15px', fontSize: '0.9rem' },
-  link: { color: '#fff', textDecoration: 'underline' }
-};
 
 export default Login;
