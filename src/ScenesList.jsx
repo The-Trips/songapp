@@ -67,44 +67,50 @@ function ScenesList() {
     navigate(`/scene/${sceneId}`);
   };
 
-  const handleJoinScene = (e, sceneId) => {
-    e.stopPropagation();
-
+const handleJoinScene = async (e, sceneId) => {
+    e.stopPropagation(); // Prevents navigating to the scene page when clicking "Join"
+    
     const isAuthenticated = localStorage.getItem("isAuthenticated");
     if (isAuthenticated !== "true") {
-      alert("Please log in to join scenes");
+      alert("Please log in to join communities");
       navigate("/login");
       return;
     }
 
-    const isJoined = joinedScenes.includes(sceneId);
-    let updatedJoined = joinedScenes;
+    try {
+      const res = await fetch(`${API_URL}/api/scenes/${sceneId}/join`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        
+        // Update the joined array in state
+        let newJoined;
+        if (data.joined) {
+            newJoined = [...joinedScenes, sceneId];
+        } else {
+            newJoined = joinedScenes.filter(id => id !== sceneId);
+        }
+        setJoinedScenes(newJoined);
 
-    if (isJoined) {
-      updatedJoined = joinedScenes.filter((id) => id !== sceneId);
-      setScenes((prev) =>
-        prev.map((s) =>
-          s.id === sceneId
-            ? { ...s, members: Math.max(0, (s.members || 0) - 1) }
-            : s,
-        ),
-      );
-    } else {
-      updatedJoined = [...joinedScenes, sceneId];
-      setScenes((prev) =>
-        prev.map((s) =>
-          s.id === sceneId ? { ...s, members: (s.members || 0) + 1 } : s,
-        ),
-      );
+        // SYNC WITH LOCAL STORAGE
+        const storageKey = `joined_scenes_${username}`;
+        localStorage.setItem(storageKey, JSON.stringify(newJoined));
+
+        // Optimistically update member count on the card
+        setScenes(prev => prev.map(s => {
+            if (s.id === sceneId) {
+                return { ...s, members: data.joined ? (s.members || 0) + 1 : Math.max(0, (s.members || 0) - 1) };
+            }
+            return s;
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to toggle join", err);
     }
-
-    setJoinedScenes(updatedJoined);
-    localStorage.setItem(
-      `joined_scenes_${username}`,
-      JSON.stringify(updatedJoined),
-    );
-
-    // TODO later: persist join/leave to backend
   };
 
   const filteredScenes = useMemo(() => {
