@@ -12,15 +12,23 @@ function EditScene() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    imageUrl: ''
+    imageUrl: '',
+    privacyStatus: 200
   });
   const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState({});
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReleaseConfirm, setShowReleaseConfirm] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [savingField, setSavingField] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('app_username');
-    if (storedUser) setUsername(storedUser);
+    let storedUser = localStorage.getItem('app_username');
+    if (storedUser) {
+      setUsername(storedUser);
+    } else {
+      storedUser = 'User';
+    }
 
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     if (isAuthenticated !== 'true') {
@@ -29,12 +37,12 @@ function EditScene() {
       return;
     }
 
-    fetchSceneData();
+    fetchSceneData(storedUser);
   }, [id, navigate]);
 
-  const fetchSceneData = async () => {
+  const fetchSceneData = async (userToFetch = username) => {
     try {
-      const res = await fetch(`${API_URL}/api/scenes/${id}`);
+      const res = await fetch(`${API_URL}/api/scenes/${id}?current_user=${userToFetch}`);
       if (!res.ok) {
         alert("Scene not found");
         navigate('/scenes');
@@ -52,7 +60,8 @@ function EditScene() {
       setFormData({
         name: data.name || '',
         description: data.description || '',
-        imageUrl: data.imageUrl || ''
+        imageUrl: data.imageUrl || '',
+        privacyStatus: data.privacyStatus || 200
       });
     } catch (err) {
       console.error("Error fetching scene:", err);
@@ -104,15 +113,16 @@ function EditScene() {
     }
   };
 
-  const handleSaveField = async (fieldName) => {
+  const handleSaveField = async (fieldName, currentFormData = formData) => {
     if (!validateForm()) return;
 
     setSavingField(fieldName);
 
     const payload = {
-      description: formData.description.trim(),
-      image_url: formData.imageUrl.trim() || null,
-      username: username
+      description: currentFormData.description.trim(),
+      image_url: currentFormData.imageUrl.trim() || null,
+      username: username,
+      privacy_status: currentFormData.privacyStatus
     };
 
     try {
@@ -134,6 +144,54 @@ function EditScene() {
       console.error(err);
       alert("Error connecting to server");
       setSavingField(null);
+    }
+  };
+
+  const handleDeleteScene = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`${API_URL}/api/scenes/${id}?username=${username}`, {
+        method: 'DELETE'
+      });
+
+      if (res.ok) {
+        alert("Scene deleted successfully");
+        navigate('/scenes');
+      } else {
+        const data = await res.json();
+        alert(data.detail || "Failed to delete scene");
+        setIsProcessing(false);
+        setShowDeleteConfirm(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to server");
+      setIsProcessing(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleReleaseOwnership = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`${API_URL}/api/scenes/${id}/release-ownership?username=${username}`, {
+        method: 'PUT'
+      });
+
+      if (res.ok) {
+        alert("Ownership released! This scene is now a community-led official space.");
+        navigate(`/scene/${id}`);
+      } else {
+        const data = await res.json();
+        alert(data.detail || "Failed to release ownership");
+        setIsProcessing(false);
+        setShowReleaseConfirm(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to server");
+      setIsProcessing(false);
+      setShowReleaseConfirm(false);
     }
   };
 
@@ -325,12 +383,21 @@ function EditScene() {
                 <span style={{ fontSize: '0.85rem', color: '#ccc' }}>Visibility</span>
               </div>
               <select 
-                defaultValue="public"
-                className="bg-black border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-400 outline-none"
+                value={formData.privacyStatus}
+                onChange={(e) => {
+                  const newVal = parseInt(e.target.value);
+                  const newFormData = { ...formData, privacyStatus: newVal };
+                  setFormData(newFormData);
+                  // Pass latest data to avoid stale state from render cycle
+                  handleSaveField('privacyStatus', newFormData);
+                }}
+                className="bg-black border border-zinc-800 rounded px-2 py-1 text-xs text-zinc-400 outline-none cursor-pointer hover:border-zinc-600 transition-colors"
               >
-                <option value="public">Public</option>
-                <option value="private">Private</option>
+                <option value={200}>🌍 Public</option>
+                <option value={400}>🔒 Private</option>
               </select>
+              {savingField === 'privacyStatus' && <span style={{ fontSize: '0.7rem', color: '#1db954' }}>saving...</span>}
+              {savingField === 'privacyStatus-success' && <span style={{ fontSize: '0.7rem', color: '#1db954' }}>✓ saved</span>}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #222', paddingTop: '12px' }}>
@@ -341,22 +408,60 @@ function EditScene() {
                 </div>
                 <span style={{ fontSize: '0.7rem', color: '#666' }}>Resigning is permanent</span>
               </div>
-              <button
-                type="button"
-                onClick={() => alert("MOCK: Ownership resign.")}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  border: '1px solid #e74c3c',
-                  background: 'transparent',
-                  color: '#e74c3c',
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                Resign
-              </button>
+              
+              {!showReleaseConfirm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowReleaseConfirm(true)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    border: '1px solid #e74c3c',
+                    background: 'transparent',
+                    color: '#e74c3c',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Resign
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#e74c3c', fontWeight: 'bold' }}>Sure?</span>
+                    <button
+                        onClick={handleReleaseOwnership}
+                        disabled={isProcessing}
+                        style={{
+                            padding: '6px 12px',
+                            background: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {isProcessing ? '...' : 'Yes'}
+                    </button>
+                    <button
+                        onClick={() => setShowReleaseConfirm(false)}
+                        style={{
+                            padding: '6px 10px',
+                            background: '#333',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        No
+                    </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -372,13 +477,14 @@ function EditScene() {
               background: '#1db954',
               color: 'black',
               fontWeight: 'bold',
-              cursor: 'pointer',
+      cursor: 'pointer',
               fontSize: '0.9rem'
             }}
           >
             Done
           </button>
         </div>
+
       </div>
     </div>
   );

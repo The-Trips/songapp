@@ -127,7 +127,15 @@ function AlbumPage() {
             <div key={r.id} style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#ce5c5c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{r.user.charAt(0)}</div>
                 <div>
-                    <div><strong>{r.user}</strong> <span style={{fontSize:'0.8em', color:'#ccc'}}>{r.date}</span></div>
+                    <div>
+                      <strong 
+                        onClick={() => navigate(`/profile/${r.user}`)}
+                        style={{ cursor: 'pointer', color: '#fff', textDecoration: 'underline' }}
+                      >
+                        {r.user}
+                      </strong>{" "}
+                      <span style={{fontSize:'0.8em', color:'#ccc'}}>{r.date}</span>
+                    </div>
                     <div>{r.text}</div>
                 </div>
             </div>

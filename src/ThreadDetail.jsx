@@ -136,8 +136,22 @@ const RenderReplies = ({
             )}
 
             <div className="reply-header">
-              <span className="reply-avatar">{isGhost ? "?" : reply.author.charAt(0)}</span>
-              <span className="reply-author" style={{ color: isGhost ? "#666" : "inherit", fontStyle: isGhost ? "italic" : "normal" }}>
+              <span 
+                className="reply-avatar"
+                onClick={() => !isGhost && navigate(`/profile/${reply.author}`)}
+                style={{ cursor: isGhost ? "default" : "pointer" }}
+              >
+                {isGhost ? "?" : reply.author.charAt(0)}
+              </span>
+              <span 
+                className="reply-author" 
+                onClick={() => !isGhost && navigate(`/profile/${reply.author}`)}
+                style={{ 
+                  color: isGhost ? "#666" : "inherit", 
+                  fontStyle: isGhost ? "italic" : "normal",
+                  cursor: isGhost ? "default" : "pointer"
+                }}
+              >
                 {isGhost ? "[deleted]" : reply.author}
               </span>
               <span className="separator">•</span>
@@ -240,6 +254,10 @@ const RenderReplies = ({
                   <button
                     className="reply-btn"
                     onClick={() => {
+                        if (replies?.[0]?.privacyStatus === 400) {
+                            alert("This scene is currently private. No new replies can be added.");
+                            return;
+                        }
                       const isClosing = replyingTo === reply.id;
                       setReplyingTo(isClosing ? null : reply.id);
                       if (!isClosing) {
@@ -250,12 +268,13 @@ const RenderReplies = ({
                       background: "transparent",
                       border: "none",
                       color: "#888",
-                      cursor: "pointer",
+                      cursor: (replies?.[0]?.privacyStatus === 400) ? "not-allowed" : "pointer",
                       fontSize: "0.85rem",
                       padding: "0",
+                      opacity: (replies?.[0]?.privacyStatus === 400) ? 0.5 : 1
                     }}
                   >
-                    💬 Reply
+                    💬 {replies?.[0]?.privacyStatus === 400 ? "Locked" : "Reply"}
                   </button>
                 )}
                 {isAuthor && !isGhost && (
@@ -432,9 +451,14 @@ function ThreadDetail() {
     const storedUser = localStorage.getItem("app_username");
     if (storedUser) setUsername(storedUser);
 
-    fetch(`http://localhost:8000/api/threads/${threadId}/replies`)
+    fetch(`http://localhost:8000/api/threads/${threadId}/replies?current_user=${storedUser || "User"}`)
       .then(async (res) => {
         if (!res.ok) {
+          if (res.status === 403) {
+            setThread({ 403: true });
+            setIsLoading(false);
+            return null;
+          }
           const text = await res.text();
           throw new Error(
             `Threads API failed (${res.status}). Response: ${text}`,
@@ -444,7 +468,8 @@ function ThreadDetail() {
       })
       .then((data) => {
         if (!data || !data.thread) {
-          console.error("Expected { thread, replies } but got:", data);
+           if (data === null) return; // already handled 403
+           console.error("Expected { thread, replies } but got:", data);
           throw new Error("Missing `thread` in /api/threads response");
         }
 
@@ -504,6 +529,11 @@ function ThreadDetail() {
       parent_reply_id: null,
     };
 
+    if (scene?.privacyStatus === 400) {
+        alert("This scene is currently private. No new comments can be added.");
+        return;
+    }
+    
     try {
       const res = await fetch("http://localhost:8000/api/replies", {
         method: "POST",
@@ -772,6 +802,41 @@ function ThreadDetail() {
   }
 
   if (!thread || !scene) {
+    if (thread?.[403]) {
+      return (
+        <div
+          className="main-content"
+          style={{
+            padding: "100px 20px",
+            color: "white",
+            maxWidth: "600px",
+            margin: "0 auto",
+            textAlign: "center"
+          }}
+        >
+          <div style={{ fontSize: "4rem", marginBottom: "30px" }}>🔒</div>
+          <h2 style={{ fontSize: "2rem", marginBottom: "15px" }}>Private Content</h2>
+          <p style={{ color: "#888", marginBottom: "30px", lineHeight: "1.6" }}>
+            The content of this thread is currently private. Only the scene creator can view or manage its conversations.
+          </p>
+          <button
+            onClick={() => navigate("/scenes")}
+            style={{
+              padding: "12px 30px",
+              background: "#1db954",
+              border: "none",
+              borderRadius: "25px",
+              color: "black",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            ← Back to All Scenes
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div
         className="main-content"
@@ -893,6 +958,7 @@ function ThreadDetail() {
         >
           <span
             className="avatar"
+            onClick={() => thread.author !== "Unknown" && navigate(`/profile/${thread.author}`)}
             style={{
               width: "32px",
               height: "32px",
@@ -901,22 +967,28 @@ function ThreadDetail() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              cursor: thread.author === "Unknown" ? "default" : "pointer"
             }}
           >
             {thread.author === "Unknown" ? "?" : thread.author.charAt(0)}
           </span>
           <span
             className="author-name"
+            onClick={() => thread.author !== "Unknown" && navigate(`/profile/${thread.author}`)}
             style={{ 
               fontWeight: "bold", 
               color: thread.author === "Unknown" ? "#666" : "#ccc",
-              fontStyle: thread.author === "Unknown" ? "italic" : "normal"
+              fontStyle: thread.author === "Unknown" ? "italic" : "normal",
+              cursor: thread.author === "Unknown" ? "default" : "pointer"
             }}
           >
             {thread.author === "Unknown" ? "[deleted]" : thread.author}
           </span>
           <span className="separator">•</span>
           <span className="time">{formatTimeAgo(thread.createdAt)}</span>
+          {thread.privacyStatus === 400 && (
+            <span title="Private Thread" style={{ fontSize: '1.4rem' }}>🔒</span>
+          )}
         </div>
       </div>
 
@@ -1141,6 +1213,7 @@ function ThreadDetail() {
         }}>
           <h3 style={{ margin: 0 }}>
             {totalCommentCount} {totalCommentCount === 1 ? "Comment" : "Comments"}
+            {scene.privacyStatus === 400 && <span style={{ marginLeft: '10px', fontSize: '1rem', color: '#e74c3c', fontStyle: 'italic' }}>(Scene Private - Locked)</span>}
           </h3>
           <div className="filter-container" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <span style={{ fontSize: "0.85rem", color: "#888", fontWeight: "500" }}>Sort by</span>
@@ -1177,7 +1250,19 @@ function ThreadDetail() {
           </div>
         </div>
 
-        {thread.author !== "Unknown" ? (
+        {scene.privacyStatus === 400 ? (
+          <div style={{
+              background: "#1a1a1a",
+              padding: "20px",
+              borderRadius: "12px",
+              border: "1px dashed #e74c3c66",
+              textAlign: "center",
+              marginBottom: "30px",
+              color: "#e74c3c"
+          }}>
+              🔒 New comments and replies are disabled while this scene is private.
+          </div>
+        ) : thread.author !== "Unknown" ? (
           <div
             className="comment-input-container"
           style={{
@@ -1382,6 +1467,7 @@ function ThreadDetail() {
                   >
                     <span
                       className="comment-avatar"
+                      onClick={() => !isGhost && navigate(`/profile/${comment.author}`)}
                       style={{
                         width: "36px",
                         height: "36px",
@@ -1390,16 +1476,19 @@ function ThreadDetail() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        cursor: isGhost ? "default" : "pointer"
                       }}
                     >
                       {isGhost ? "?" : comment.author.charAt(0)}
                     </span>
                     <span
                       className="comment-author"
+                      onClick={() => !isGhost && navigate(`/profile/${comment.author}`)}
                       style={{
                         fontWeight: "bold",
                         color: isGhost ? "#666" : "inherit",
                         fontStyle: isGhost ? "italic" : "normal",
+                        cursor: isGhost ? "default" : "pointer"
                       }}
                     >
                       {isGhost ? "[deleted]" : comment.author}
@@ -1538,6 +1627,10 @@ function ThreadDetail() {
                         <button
                           className="reply-btn"
                           onClick={() => {
+                            if (scene.privacyStatus === 400) {
+                                alert("This scene is currently private. No new replies can be added.");
+                                return;
+                            }
                             const isClosing = replyingTo === comment.id;
                             setReplyingTo(isClosing ? null : comment.id);
                             if (!isClosing) {
@@ -1548,12 +1641,13 @@ function ThreadDetail() {
                             background: "transparent",
                             border: "none",
                             color: "#888",
-                            cursor: "pointer",
+                            cursor: (scene.privacyStatus === 400) ? "not-allowed" : "pointer",
                             fontSize: "0.85rem",
                             padding: "0",
+                            opacity: (scene.privacyStatus === 400) ? 0.5 : 1
                           }}
                         >
-                          💬 Reply
+                          💬 {scene.privacyStatus === 400 ? "Locked" : "Reply"}
                         </button>
                       )}
                       {isAuthor && !isGhost && (

@@ -17,26 +17,28 @@ function ScenesList() {
 
   useEffect(() => {
     const storedUser = localStorage.getItem("app_username");
-    if (storedUser) setUsername(storedUser);
-
+    if (storedUser) {
+      setUsername(storedUser);
+      fetchScenes(storedUser);
+    } else {
+      fetchScenes("User");
+    }
     // load joined list (kept localStorage-based)
     const savedJoined = localStorage.getItem(
       `joined_scenes_${storedUser || "User"}`,
     );
     if (savedJoined) setJoinedScenes(JSON.parse(savedJoined));
-
-    fetchScenes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
 
-  const fetchScenes = async () => {
+  const fetchScenes = async (userToFetch = username) => {
     setIsLoading(true);
 
     try {
-      // Fallback to scenes endpoint
-      let res = await fetch(`${API_URL}/api/scenes`);
+      // Pass current_user to allow seeing owned private scenes
+      let res = await fetch(`${API_URL}/api/scenes?current_user=${userToFetch}`);
       if (!res.ok)
         throw new Error(`Failed to fetch scenes. Status: ${res.status}`);
 
@@ -299,6 +301,27 @@ const handleJoinScene = async (e, sceneId) => {
                   </div>
                 )}
 
+                {/* Private Badge */}
+                {scene.privacyStatus === 400 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "10px",
+                      right: scene.isOfficial ? "80px" : "10px",
+                      background: "rgba(0,0,0,0.6)",
+                      color: "white",
+                      padding: "4px 8px",
+                      borderRadius: "12px",
+                      fontSize: "0.75rem",
+                      fontWeight: "bold",
+                      border: "1px solid #444",
+                      backdropFilter: "blur(4px)"
+                    }}
+                  >
+                    🔒 PRIVATE
+                  </div>
+                )}
+
                 {/* Scene Image */}
                 <div
                   style={{
@@ -372,7 +395,24 @@ const handleJoinScene = async (e, sceneId) => {
                 >
                   <span style={{ fontSize: "0.7rem", color: "#666" }}>
                     Created {formatTimeAgo(scene.createdAt)}
-                    {scene.createdBy ? ` by ${scene.createdBy}` : ""}
+                    {scene.createdBy && (
+                      <>
+                        {" by "}
+                        <span 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/profile/${scene.createdBy}`);
+                          }}
+                          style={{ 
+                            cursor: "pointer", 
+                            color: "#1db954", 
+                            fontWeight: "bold" 
+                          }}
+                        >
+                          {scene.createdBy}
+                        </span>
+                      </>
+                    )}
                   </span>
 
                   <button

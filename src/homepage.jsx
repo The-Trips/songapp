@@ -166,7 +166,7 @@ function Homepage() {
               }}
             >
               <div
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate(`/profile/${currentUser.username}`)}
                 style={{
                   padding: "12px 15px",
                   cursor: "pointer",
@@ -362,7 +362,15 @@ function Homepage() {
                   }}
                 ></div>
                 <div style={{ fontSize: "0.9rem", lineHeight: "1.4" }}>
-                  <span style={{ fontWeight: "bold", color: "#fff" }}>
+                  <span 
+                    onClick={() => navigate(`/profile/${item.user}`)}
+                    style={{ 
+                      fontWeight: "bold", 
+                      color: "#fff",
+                      cursor: "pointer",
+                      textDecoration: "underline"
+                    }}
+                  >
                     {item.user}
                   </span>
                   <span style={{ color: "#aaa" }}> {item.action} </span>

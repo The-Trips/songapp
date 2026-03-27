@@ -8,7 +8,8 @@ function CreateScene() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    imageUrl: ''
+    imageUrl: '',
+    privacyStatus: 200
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -91,7 +92,8 @@ function CreateScene() {
       name: formData.name.trim(),
       description: formData.description.trim(),
       image_url: formData.imageUrl.trim() || null,
-      username: username
+      username: username,
+      privacy_status: formData.privacyStatus
     };
 
     try {
@@ -298,20 +300,60 @@ function CreateScene() {
               Add a banner image to make your scene stand out
             </span>
           )}
-
+          
           {/* Image Preview */}
           {formData.imageUrl && !errors.imageUrl && isValidUrl(formData.imageUrl) && (
             <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
               <p style={{ fontSize: '0.9rem', color: '#ccc', marginBottom: '8px' }}>Preview:</p>
               <div style={{
-                width: '200px',
-                height: '200px',
+                width: '150px',
+                height: '150px',
                 background: `url(${formData.imageUrl}) center/cover`,
                 borderRadius: '8px',
                 border: '1px solid #333'
               }}></div>
             </div>
           )}
+        </div>
+
+        {/* Visibility Selection */}
+        <div style={{ marginBottom: '30px' }}>
+          <label
+            htmlFor="scene-visibility"
+            style={{
+              display: 'block',
+              marginBottom: '8px',
+              fontWeight: 'bold',
+              fontSize: '0.95rem'
+            }}
+          >
+            Scene Visibility
+          </label>
+          <select
+            id="scene-visibility"
+            name="privacyStatus"
+            value={formData.privacyStatus}
+            onChange={(e) => setFormData(prev => ({ ...prev, privacyStatus: parseInt(e.target.value) }))}
+            style={{
+              width: '100%',
+              padding: '12px',
+              borderRadius: '8px',
+              border: '1px solid #444',
+              background: '#1a1a1a',
+              color: 'white',
+              fontSize: '1rem',
+              fontFamily: 'inherit',
+              cursor: 'pointer'
+            }}
+          >
+            <option value={200}>🌍 Public (Visible to everyone)</option>
+            <option value={400}>🔒 Private (Visible only to you)</option>
+          </select>
+          <span style={{ color: '#666', fontSize: '0.85rem', marginTop: '5px', display: 'block' }}>
+            {formData.privacyStatus === 200 
+              ? "Anyone can find and join this scene. All content is public." 
+              : "Only you can see this scene and its content. Others cannot join or post."}
+          </span>
         </div>
 
         {/* Guidelines */}

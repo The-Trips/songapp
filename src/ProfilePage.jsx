@@ -1,5 +1,5 @@
 // src/ProfilePage.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import './ProfilePage.css';
 
@@ -37,7 +37,7 @@ function ProfilePage({ isAuthenticated, onLogout }) {
     const [editWebsite, setEditWebsite] = useState("");
     const [editAvatar, setEditAvatar] = useState("");
     const [isFollowing, setIsFollowing] = useState(false);
-    const [editIsPrivate, setEditIsPrivate] = useState(false);
+    const [editPrivacyStatus, setEditPrivacyStatus] = useState(200); 
 
     const [modalData, setModalData] = useState({ isOpen: false, title: "", listId: null, type: "users", list: [] });
 
@@ -65,7 +65,7 @@ function ProfilePage({ isAuthenticated, onLogout }) {
                 setEditInsta(data.insta_url || "");
                 setEditTwitter(data.twitter_url || "");
                 setEditWebsite(data.website_url || "");
-                setEditIsPrivate(data.is_private || false); 
+                setEditPrivacyStatus(data.privacy_status || 200); 
 
                 const amIFollowing = data.followers?.some(f => f.username === loggedInUsername);
                 setIsFollowing(amIFollowing);
@@ -116,10 +116,9 @@ function ProfilePage({ isAuthenticated, onLogout }) {
                 body: JSON.stringify({
                     bio: editBio,
                     prof_pic_url: editAvatar,
-                    insta_url: instaCheck.formattedUrl,
                     twitter_url: twitterCheck.formattedUrl,
                     website_url: websiteCheck.formattedUrl,
-                    is_private: editIsPrivate
+                    privacy_status: editPrivacyStatus
                 })
             });
 
@@ -141,6 +140,26 @@ function ProfilePage({ isAuthenticated, onLogout }) {
             setEditWebsite(websiteCheck.formattedUrl);
 
             setIsEditing(false);
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
+    const handleDeleteProfile = async () => {
+        if (!window.confirm("CRITICAL: Are you absolutely sure you want to delete your entire profile? This will remove all your lists, reviews, and scene history forever.")) return;
+        
+        try {
+            const res = await fetch(`http://localhost:8000/api/users/${loggedInUsername}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                alert("Account deleted. We're sorry to see you go!");
+                if (onLogout) onLogout();
+                navigate('/register');
+            } else {
+                throw new Error("Failed to delete account");
+            }
         } catch (err) {
             alert(err.message);
         }
@@ -248,9 +267,12 @@ function ProfilePage({ isAuthenticated, onLogout }) {
     if (error) return <div className="profile-container error">Error: {error}</div>;
     if (!user) return null;
 
-    const isPublic = user && !user.is_private;
+    const privacyStatus = user?.privacy_status || 200;
     const isMutual = user && user.is_mutual;
-    const canViewContent = isOwnProfile || (isAuthenticated && (isPublic || isMutual));
+    const canViewContent = isOwnProfile || (isAuthenticated && (
+        privacyStatus === 200 || 
+        (privacyStatus === 300 && isMutual)
+    ));
 
     const handleFollowersClick = async () => {
         if (!canViewContent) return;
@@ -322,18 +344,53 @@ function ProfilePage({ isAuthenticated, onLogout }) {
                 <div className="profile-info">
                     <div className="profile-top-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                         <h1>{user.username}</h1>
-                        {user.is_private && <span title="Private Profile" style={{ fontSize: '1.4rem' }}>🔒</span>}
+                        {user.privacy_status === 300 && <span title="Friends Only Profile" style={{ fontSize: '1.4rem' }}>👥</span>}
+                        {user.privacy_status === 400 && <span title="Private Profile" style={{ fontSize: '1.4rem' }}>🔒</span>}
                     </div>
 
                     {isEditing && (
-                        <div style={{ margin: '15px 0', display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.05)', padding: '8px 16px', borderRadius: '999px' }}>
-                            <label style={{ color: '#fff', fontSize: '0.95rem', cursor: 'pointer', fontWeight: '500' }}>Private Profile:</label>
-                            <input
-                                type="checkbox"
-                                checked={editIsPrivate}
-                                onChange={(e) => setEditIsPrivate(e.target.checked)}
-                                style={{ cursor: 'pointer', transform: 'scale(1.2)', accentColor: '#1db954' }}
-                            />
+                        <div style={{ margin: '15px 0', display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.05)', padding: '12px 16px', borderRadius: '12px' }}>
+                            <label style={{ color: '#aaa', fontSize: '0.85rem', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>Profile Visibility</label>
+                            <select 
+                                value={editPrivacyStatus} 
+                                onChange={(e) => setEditPrivacyStatus(parseInt(e.target.value))}
+                                style={{ 
+                                    background: '#333', 
+                                    color: 'white', 
+                                    border: '1px solid #444', 
+                                    padding: '8px', 
+                                    borderRadius: '6px',
+                                    outline: 'none',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                <option value={200}>Public (Everyone)</option>
+                                <option value={300}>Friends Only (Mutual Follows)</option>
+                                <option value={400}>Private (Only Me)</option>
+                            </select>
+
+                            <div style={{ marginTop: '20px', borderTop: '1px solid #444', paddingTop: '15px' }}>
+                                <p style={{ color: '#e63946', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>Danger Zone</p>
+                                <button 
+                                    onClick={handleDeleteProfile}
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px',
+                                        background: 'transparent',
+                                        color: '#e63946',
+                                        border: '1px solid #e63946',
+                                        borderRadius: '8px',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => { e.target.style.background = 'rgba(230, 57, 70, 0.1)'; }}
+                                    onMouseLeave={(e) => { e.target.style.background = 'transparent'; }}
+                                >
+                                    Delete My Profile Permanently
+                                </button>
+                            </div>
                         </div>
                     )}
 
@@ -426,31 +483,24 @@ function ProfilePage({ isAuthenticated, onLogout }) {
                 </div>
             ) : (
                 <div className="profile-details-grid">
-                    <div className="details-section full-width">
-                        <h3>Reviews ({user.reviews?.length || 0})</h3>
-                        <div className="reviews-list">
-                            {user.reviews?.length > 0 ? user.reviews.map((r, i) => (
-                                <div key={i} className="review-card micro-hover stagger-in" style={{ animationDelay: `${i * 0.1}s` }}>
-                                    <div className="review-header">
-                                        <strong>{r.album} <span className="artist-text">by {r.artist}</span></strong>
-                                        <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
-                                    </div>
-                                    <p className="review-body">"{r.text}"</p>
-                                    <div className="review-footer">{r.date}</div>
-                                </div>
-                            )) : <p className="empty-text">No reviews written yet.</p>}
-                        </div>
-                    </div>
-
-                    {!canViewContent ? (
-                        <div className="guest-restriction full-width">
-                            <h2>🔒 This profile is private.</h2>
-                            <p style={{ fontSize: '1rem', marginTop: '10px' }}>
-                                You must be friends (follow each other) to view custom lists and scenes.
-                            </p>
-                        </div>
-                    ) : (
+                    {canViewContent ? (
                         <>
+                            <div className="details-section full-width">
+                                <h3>Reviews ({user.reviews?.length || 0})</h3>
+                                <div className="reviews-list">
+                                    {user.reviews?.length > 0 ? user.reviews.map((r, i) => (
+                                        <div key={i} className="review-card micro-hover stagger-in" style={{ animationDelay: `${i * 0.1}s` }}>
+                                            <div className="review-header">
+                                                <strong>{r.album} <span className="artist-text">by {r.artist}</span></strong>
+                                                <span className="stars">{"★".repeat(r.rating || 0)}{"☆".repeat(5 - (r.rating || 0))}</span>
+                                            </div>
+                                            <p className="review-body">"{r.text}"</p>
+                                            <div className="review-footer">{r.date}</div>
+                                        </div>
+                                    )) : <p className="empty-text">No reviews written yet.</p>}
+                                </div>
+                            </div>
+
                             <div className="details-section full-width">
                                 <h3>Custom Lists ({user.lists?.length || 0})</h3>
                                 <div className="horizontal-scroll">
@@ -480,6 +530,15 @@ function ProfilePage({ isAuthenticated, onLogout }) {
                                 </div>
                             </div>
                         </>
+                    ) : (
+                        <div className="guest-restriction full-width">
+                            <h2>{privacyStatus === 400 ? "🔒 This profile is private." : "👥 This profile is for friends only."}</h2>
+                            <p style={{ fontSize: '1rem', marginTop: '10px' }}>
+                                {privacyStatus === 400 
+                                    ? "Only the owner can view this content." 
+                                    : "You must be friends (follow each other) to view custom lists, scenes, and reviews."}
+                            </p>
+                        </div>
                     )}
                 </div>
             )}

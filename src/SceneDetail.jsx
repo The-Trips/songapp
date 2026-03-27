@@ -25,7 +25,7 @@ function SceneDetail() {
   useEffect(() => {
     const storedUser = localStorage.getItem("app_username");
     if (storedUser) setUsername(storedUser);
-
+    
     // joined check (localStorage)
     const savedJoined = localStorage.getItem(
       `joined_scenes_${storedUser || "User"}`,
@@ -37,18 +37,22 @@ function SceneDetail() {
       setIsJoined(false);
     }
 
-    fetchSceneData();
+    fetchSceneData(storedUser || "User");
   }, [sceneIdRaw]);
 
 
 
-  const fetchSceneData = async () => {
+  const fetchSceneData = async (userToFetch = username) => {
     setIsLoading(true);
 
     try {
-      let sceneRes = await fetch(`${API_URL}/api/scenes/${sceneIdRaw}`);
+      let sceneRes = await fetch(`${API_URL}/api/scenes/${sceneIdRaw}?current_user=${userToFetch}`);
       if (!sceneRes.ok) {
-        setScene(null);
+        if (sceneRes.status === 403) {
+            setScene({ 403: true });
+        } else {
+            setScene(null);
+        }
         setThreads([]);
         setIsLoading(false);
         return;
@@ -119,6 +123,12 @@ const handleJoinToggle = async () => {
       navigate("/login");
       return;
     }
+
+    if (scene?.privacyStatus === 400) {
+        alert("This scene is currently private. No new threads can be created.");
+        return;
+    }
+
     navigate(`/scene/${sceneIdRaw}/create-thread`);
   };
 
@@ -216,6 +226,41 @@ const handleJoinToggle = async () => {
     );
   }
 
+  if (scene[403]) {
+    return (
+        <div
+          className="main-content"
+          style={{
+            padding: "100px 20px",
+            color: "white",
+            maxWidth: "600px",
+            margin: "0 auto",
+            textAlign: "center"
+          }}
+        >
+          <div style={{ fontSize: "4rem", marginBottom: "30px" }}>🔒</div>
+          <h2 style={{ fontSize: "2rem", marginBottom: "15px" }}>This Scene is Private</h2>
+          <p style={{ color: "#888", marginBottom: "30px", lineHeight: "1.6" }}>
+            The content of this scene is currently hidden. Only the creator has access to view and manage its activity.
+          </p>
+          <button
+            onClick={() => navigate("/scenes")}
+            style={{
+              padding: "12px 30px",
+              background: "#1db954",
+              border: "none",
+              borderRadius: "25px",
+              color: "black",
+              fontWeight: "bold",
+              cursor: "pointer",
+            }}
+          >
+            ← Back to All Scenes
+          </button>
+        </div>
+      );
+  }
+
   return (
     <div
       className="main-content"
@@ -270,6 +315,27 @@ const handleJoinToggle = async () => {
             }}
           >
             ✓ OFFICIAL
+          </div>
+        )}
+
+        {/* Private Badge */}
+        {scene.privacyStatus === 400 && (
+          <div
+            style={{
+              position: "absolute",
+              top: "20px",
+              right: scene.isOfficial ? "120px" : "20px",
+              background: "rgba(0,0,0,0.6)",
+              color: "white",
+              padding: "6px 14px",
+              borderRadius: "20px",
+              fontSize: "0.85rem",
+              fontWeight: "bold",
+              border: "1px solid #444",
+              backdropFilter: "blur(4px)"
+            }}
+          >
+            🔒 PRIVATE
           </div>
         )}
 
@@ -330,7 +396,19 @@ const handleJoinToggle = async () => {
               {/* NEW */}
               <span>Created {formatTimeAgo(scene.createdAt)}</span>
 
-              <span>Created by {scene.createdBy || "Unknown"}</span>
+              <span>
+                Created by{" "}
+                <span 
+                  onClick={() => scene.createdBy && navigate(`/profile/${scene.createdBy}`)}
+                  style={{ 
+                    cursor: scene.createdBy ? "pointer" : "default",
+                    color: scene.createdBy ? "#1db954" : "inherit",
+                    fontWeight: scene.createdBy ? "bold" : "normal"
+                  }}
+                >
+                  {scene.createdBy || "Unknown"}
+                </span>
+              </span>
             </div>
 
             {/* Action Buttons */}
@@ -408,7 +486,6 @@ const handleJoinToggle = async () => {
         </div>
       </div>
 
-      {/* Threads Section */}
       <div
         style={{
           marginBottom: "20px",
@@ -418,21 +495,27 @@ const handleJoinToggle = async () => {
         }}
       >
         <h2>Threads</h2>
-        <button
-          onClick={handleCreateThread}
-          style={{
-            padding: "10px 20px",
-            borderRadius: "25px",
-            background: "#1db954",
-            color: "black",
-            border: "none",
-            fontWeight: "bold",
-            cursor: "pointer",
-            fontSize: "0.95rem",
-          }}
-        >
-          + New Thread
-        </button>
+        {scene.privacyStatus === 400 ? (
+            <div style={{ color: "#e74c3c", fontSize: "0.85rem", fontStyle: "italic", border: "1px solid rgba(231, 76, 60, 0.3)", padding: "6px 12px", borderRadius: "8px", background: "rgba(231, 76, 60, 0.05)" }}>
+                Posting disabled (Scene is Private)
+            </div>
+        ) : (
+            <button
+            onClick={handleCreateThread}
+            style={{
+                padding: "10px 20px",
+                borderRadius: "25px",
+                background: "#1db954",
+                color: "black",
+                border: "none",
+                fontWeight: "bold",
+                cursor: "pointer",
+                fontSize: "0.95rem",
+            }}
+            >
+            + New Thread
+            </button>
+        )}
       </div>
 
       {/* Sort Options */}
@@ -569,6 +652,10 @@ const handleJoinToggle = async () => {
                 }}
               >
                 <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (thread.author !== "Unknown") navigate(`/profile/${thread.author}`);
+                  }}
                   style={{
                     width: "28px",
                     height: "28px",
@@ -578,14 +665,23 @@ const handleJoinToggle = async () => {
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "0.9rem",
+                    cursor: thread.author === "Unknown" ? "default" : "pointer"
                   }}
                 >
                   {thread.author === "Unknown" ? "?" : thread.author?.charAt(0) || "U"}
                 </span>
-                <span style={{ 
-                  color: thread.author === "Unknown" ? "#666" : "inherit",
-                  fontStyle: thread.author === "Unknown" ? "italic" : "normal"
-                }}>
+                <span 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (thread.author !== "Unknown") navigate(`/profile/${thread.author}`);
+                  }}
+                  style={{ 
+                    color: thread.author === "Unknown" ? "#666" : "inherit",
+                    fontStyle: thread.author === "Unknown" ? "italic" : "normal",
+                    cursor: thread.author === "Unknown" ? "default" : "pointer",
+                    fontWeight: thread.author === "Unknown" ? "normal" : "bold"
+                  }}
+                >
                   {thread.author === "Unknown" ? "[deleted]" : thread.author}
                 </span>
                 <span>•</span>

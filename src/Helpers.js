@@ -82,6 +82,7 @@ export const normalizeThread = (thread) => {
     updatedAt: thread.date_updated ?? thread.updatedAt,
     upvotes: thread.likes ?? thread.upvotes ?? 0,
     commentCount: thread.comment_count ?? thread.commentCount ?? 0,
+    privacyStatus: thread.privacyStatus ?? thread.privacy_status ?? 200,
   };
 };
 
@@ -111,5 +112,6 @@ export const normalizeScene = (item) => {
     updatedAt: item.updatedAt ?? item.date_updated,
     albumId: item.albumId ?? null,
     numThreads: item.numThreads ?? item.threadsCount ?? 0,
+    privacyStatus: item.privacyStatus ?? item.privacy_status ?? 200,
   };
 };

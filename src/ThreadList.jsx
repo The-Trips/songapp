@@ -95,7 +95,13 @@ function ThreadList({ isAuthenticated }) {
                 <p className="thread-preview">{thread.preview}</p>
                 <div className="thread-meta">
                   <span className="author">
-                    <span className="avatar">{thread.author.charAt(0)}</span>
+                    <span 
+                      className="avatar"
+                      onClick={(e) => { e.stopPropagation(); navigate(`/profile/${thread.author}`); }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {thread.author.charAt(0)}
+                    </span>
                     <span 
                       className="author-name" 
                       onClick={(e) => { e.stopPropagation(); navigate(`/profile/${thread.author}`); }}

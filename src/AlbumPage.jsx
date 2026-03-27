@@ -430,7 +430,15 @@ function AlbumPage({ isAuthenticated }) {
                         gap: "10px",
                       }}
                     >
-                      <div style={{ fontWeight: "bold", color: "#fff" }}>
+                      <div 
+                        onClick={() => navigate(`/profile/${r.user}`)}
+                        style={{ 
+                          fontWeight: "bold", 
+                          color: "#fff", 
+                          cursor: "pointer",
+                          textDecoration: "underline"
+                        }}
+                      >
                         {r.user}
                         {isMine && (
                           <span
@@ -441,6 +449,8 @@ function AlbumPage({ isAuthenticated }) {
                               color: "black",
                               padding: "2px 6px",
                               borderRadius: "4px",
+                              textDecoration: "none",
+                              display: "inline-block"
                             }}
                           >
                             YOU
