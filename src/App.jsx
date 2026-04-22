@@ -9,6 +9,7 @@ import {
 import Layout from "./Layout";
 import Login from "./Login";
 import Register from "./Registration";
+import Verification from "./Verification";
 import CreateUsername from "./CreateUsername";
 import Homepage from "./homepage";
 import AlbumPage from "./AlbumPage";
@@ -62,6 +63,10 @@ function App() {
         <Route
           path="/register"
           element={isAuthenticated ? <Navigate to="/" replace /> : <Register />}
+        />
+        <Route
+          path="/verify"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <Verification />}
         />
         <Route path="/create-username" element={<CreateUsername />} />
 

@@ -14,7 +14,8 @@ function Registration() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ 
     name: '', 
-    email: '', 
+    email: '',
+    username: '',
     password: '', 
     confirmPassword: '' 
   });
@@ -43,6 +44,7 @@ function Registration() {
         body: JSON.stringify({ 
             name: formData.name, 
             email: formData.email, 
+            username: formData.username,
             password: formData.password 
         }),
       });
@@ -52,8 +54,8 @@ function Registration() {
         throw new Error(data.detail || 'Registration failed');
       }
 
-      // Success! Move to step 2: Create Username
-      navigate('/create-username', { state: { email: formData.email } });
+      // Success! Move to step 2: Verification
+      navigate('/verify', { state: { email: formData.email } });
       
     } catch (err) {
       setError(err.message);
@@ -107,6 +109,19 @@ function Registration() {
               required 
             />
             <Mail className="reg-input-icon" size={20} />
+          </div>
+
+          <div className="reg-input-group">
+            <input 
+              type="text" 
+              name="username" 
+              placeholder="Username" 
+              className="reg-input"
+              value={formData.username} 
+              onChange={handleChange} 
+              required 
+            />
+            <User className="reg-input-icon" size={20} />
           </div>
 
           <div className="reg-input-group">
