@@ -136,6 +136,12 @@ function Login({ onLogin }) {
           </button>
         </form>
 
+        <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <Link to="/forgot-password" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', textDecoration: 'none' }}>
+            Forgot password?
+          </Link>
+        </div>
+
         <footer className="reg-footer">
           Don't have an account?{" "}
           <Link to="/register" className="reg-login-link">
