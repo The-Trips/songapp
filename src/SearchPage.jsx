@@ -7,14 +7,14 @@ function SearchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [results, setResults] = useState({ artists: [], albums: [], users: [] });
+  const [results, setResults] = useState({ artists: [], albums: [], users: [], scenes: [], tags: [] });
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
   // Debounced search
   useEffect(() => {
     if (searchQuery.length < 2) {
-      setResults({ artists: [], albums: [], users: [] });
+      setResults({ artists: [], albums: [], users: []});
       setHasSearched(false);
       return;
     }
