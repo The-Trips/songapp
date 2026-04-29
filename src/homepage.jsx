@@ -1,6 +1,7 @@
 // src/Homepage.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import NotificationBell from "./NotificationBell";
 
 function Homepage() {
   const navigate = useNavigate();
@@ -108,96 +109,100 @@ function Homepage() {
       >
         <h1>Home</h1>
 
-        {/* PROFILE SECTION (Top Right) */}
-        <div style={{ position: "relative" }}>
-          <div
-            onClick={toggleDropdown}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              cursor: "pointer",
-              background: "#222",
-              padding: "5px 15px 5px 5px",
-              borderRadius: "30px",
-              border: "1px solid #333",
-            }}
-          >
-            {currentUser ? (
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  borderRadius: "50%",
-                  overflow: "hidden",
-                  background: "#555",
-                }}
-              >
-                <img
-                  src={currentUser.avatar}
-                  alt="Me"
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              </div>
-            ) : (
-              <span style={{ height: "40px" }}></span>
-            )}
-
-            <span style={{ fontWeight: "bold", fontSize: "0.9rem" }}>
-              {currentUser ? currentUser.username : "Login/SignUp"}{" "}
-              {currentUser && "▼"}
-            </span>
-          </div>
-
-          {/* DROPDOWN MENU */}
-          {showProfileMenu && currentUser && (
+        {/* PROFILE SECTION + notification bell (Top Right) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {/* Notification Bell */}
+          <NotificationBell username={currentUser?.username || null} isAuthenticated={!!currentUser} />
+          <div style={{ position: "relative" }}>
             <div
+              onClick={toggleDropdown}
               style={{
-                position: "absolute",
-                top: "55px",
-                right: 0,
-                backgroundColor: "#222",
-                border: "1px solid #444",
-                borderRadius: "8px",
-                width: "150px",
-                boxShadow: "0 5px 15px rgba(0,0,0,0.5)",
-                zIndex: 50,
-                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                cursor: "pointer",
+                background: "#222",
+                padding: "5px 15px 5px 5px",
+                borderRadius: "30px",
+                border: "1px solid #333",
               }}
             >
-              <div
-                onClick={() => navigate(`/profile/${currentUser.username}`)}
-                style={{
-                  padding: "12px 15px",
-                  cursor: "pointer",
-                  borderBottom: "1px solid #333",
-                  fontSize: "0.9rem",
-                  color: "white",
-                }}
-                onMouseEnter={(e) => (e.target.style.background = "#333")}
-                onMouseLeave={(e) =>
-                  (e.target.style.background = "transparent")
-                }
-              >
-                Profile
-              </div>
-              <div
-                onClick={handleDropdownLogout}
-                style={{
-                  padding: "12px 15px",
-                  cursor: "pointer",
-                  fontSize: "0.9rem",
-                  color: "#ff5555",
-                }}
-                onMouseEnter={(e) => (e.target.style.background = "#333")}
-                onMouseLeave={(e) =>
-                  (e.target.style.background = "transparent")
-                }
-              >
-                Logout
-              </div>
+              {currentUser ? (
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    background: "#555",
+                  }}
+                >
+                  <img
+                    src={currentUser.avatar}
+                    alt="Me"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </div>
+              ) : (
+                <span style={{ height: "40px" }}></span>
+              )}
+
+              <span style={{ fontWeight: "bold", fontSize: "0.9rem" }}>
+                {currentUser ? currentUser.username : "Login/SignUp"}{" "}
+                {currentUser && "▼"}
+              </span>
             </div>
-          )}
+
+            {/* DROPDOWN MENU */}
+            {showProfileMenu && currentUser && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "55px",
+                  right: 0,
+                  backgroundColor: "#222",
+                  border: "1px solid #444",
+                  borderRadius: "8px",
+                  width: "150px",
+                  boxShadow: "0 5px 15px rgba(0,0,0,0.5)",
+                  zIndex: 50,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  onClick={() => navigate(`/profile/${currentUser.username}`)}
+                  style={{
+                    padding: "12px 15px",
+                    cursor: "pointer",
+                    borderBottom: "1px solid #333",
+                    fontSize: "0.9rem",
+                    color: "white",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.background = "#333")}
+                  onMouseLeave={(e) =>
+                    (e.target.style.background = "transparent")
+                  }
+                >
+                  Profile
+                </div>
+                <div
+                  onClick={handleDropdownLogout}
+                  style={{
+                    padding: "12px 15px",
+                    cursor: "pointer",
+                    fontSize: "0.9rem",
+                    color: "#ff5555",
+                  }}
+                  onMouseEnter={(e) => (e.target.style.background = "#333")}
+                  onMouseLeave={(e) =>
+                    (e.target.style.background = "transparent")
+                  }
+                >
+                  Logout
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -362,10 +367,10 @@ function Homepage() {
                   }}
                 ></div>
                 <div style={{ fontSize: "0.9rem", lineHeight: "1.4" }}>
-                  <span 
+                  <span
                     onClick={() => navigate(`/profile/${item.user}`)}
-                    style={{ 
-                      fontWeight: "bold", 
+                    style={{
+                      fontWeight: "bold",
                       color: "#fff",
                       cursor: "pointer",
                       textDecoration: "underline"
