@@ -1,6 +1,6 @@
 // src/ProfilePage.jsx
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import './ProfilePage.css';
 
 const formatAndValidateUrl = (url) => {
@@ -38,6 +38,7 @@ function ProfilePage({ isAuthenticated, onLogout }) {
     const [editAvatar, setEditAvatar] = useState("");
     const [isFollowing, setIsFollowing] = useState(false);
     const [editPrivacyStatus, setEditPrivacyStatus] = useState(200); 
+    const location = useLocation();
 
     const [modalData, setModalData] = useState({ isOpen: false, title: "", listId: null, type: "users", list: [] });
 
@@ -45,7 +46,7 @@ function ProfilePage({ isAuthenticated, onLogout }) {
 
     useEffect(() => {
         fetchProfile();
-    }, [profileUsername]);
+    }, [profileUsername, location.key]);
 
     const fetchProfile = () => {
         setLoading(true);
